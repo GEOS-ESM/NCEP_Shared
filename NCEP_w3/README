@@ -1,0 +1,74 @@
+README for w3lib
+
+14 Dec 1997  BUFRON29
+-----------------------------------
+This release of 'w3lib' for BUFRON29 contains only the routines needed
+for running the BUFR -> ON29 converter program.
+
+11 Mar 1999
+-----------------------------------
+Pruned file distribution to contain only those named in the Makefile,
+i.e. only those used by routines that we are using.
+
+28 Jun 1999
+-----------------------------------
+Added new routines for new PREPDATA (from NCEP via Genia)
+Temporary replacement for W3MOVDAT routine - should consider
+trying to obtain new copy of entire W3LIB code to make sure
+files are up to date, and to get new date/time routines.
+
+24 August 1999  Sienkiewicz
+-----------------------------------
+Note that the routines W3ERSUNB and W3UNPKB7 have been replaced
+with dummy routines.  These routines require the new NCEP 
+W3DIFDAT routine which we do not have.
+	W3ERSUNB - read data from ERS BUFR file
+	W3UNPKB7 - read data from Profiler, GOES sounding and NEXRAD files
+Since we do not use PREPDATA to process these data types, they are not
+currently needed.  Were we to wish to process these datatypes however
+the missing date routines would also need to be obtained.
+
+15 July 2004 Todling
+--------------------
+Merged two versions of this library as it stood in the
+GMAO repository, these being: paqc/w3lib and the fvssi/w3. 
+Basically what I did was to preserve the w3 lib as from
+the fvssi/ system and add the missing files from the version
+under paqc. On top of that, there were three files that were
+common to both versin and yet different: w3movdat.f, w3tagb.f, xmovex.f
+off these, the only one really different is w3tagb.f which I chose to
+keep the one from the fvssi version since it seemed to be newer and 
+because I have tested things for GSI w/ this file in place rather
+than the one in the paqc. It remains to be seen that this doesn't mess
+up anything related to prevents/paqc/etc.
+
+Now, in trying to create the 3-precision libraries I stamble onto
+the problem of not being able to compiler two routines under -i4,
+these being: w3ai38 and w3ai39. In order to compile them, I changed
+the declaration of the hexadecimal array defined in the DATA statements
+in each routine to be interger*8. I am not 100% sure there will be
+no impact at runtime related to this.
+
+The presence of mova2i in this w3 library creates a circular dependency
+between the buffer and this w3 library. I suppose mova2a also does not
+below here.
+
+TBD:  - resolve circular dependency between bfr and w3 (mova2i)
+      - move iw3 routines somewhere else
+
+19 Jul 2004 Todling
+-------------------
+- removed cft77 from the library; it's redundant and it gives trouble on 
+  the compaq; sgi might simply be hidding the potential problems.
+
+27 Jul 2004 Sienkiewicz
+-----------------------
+Replace a few routines with "newer" versions I've tested.
+ w3ai38.f w3ai39.f  from NCEP (Ricardo's Int*8 from 15 July is OK, though, 
+                       as it's also in the NCEP versions)
+
+ errexit.f       I added 'CALL EXIT' which will allow exit codes to be 
+                     passed to shell on exit.
+
+ w3movdat.f      remove my "temporary" replacement routine & add NCEP routine.
+ w3fi04.f        from NCEP - 'SAVE' statement removed.

@@ -1,0 +1,44 @@
+#!/bin/make
+#-----------------------------------------------------------------------
+#       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+#-----------------------------------------------------------------------
+# !IROUTINE: Makefile.conf.Linux
+# 
+# !DESCRIPTION: 
+#	An included local make configuration.  See file Makefile for
+#   detailed `make' procedure.  This shell has been built to override
+#   the default environments (including commands) defined in file 
+#   Makefile.
+#
+#	+ `uname -a` = "OSF1 molotov V3.2 17 alpha"
+#
+# !CALLING SEQUENCE:
+#	% ln -s Makefile.OSF1 Makefile.conf
+#	% make ...
+#
+# !SEE ALSO: Makefile
+#
+# !REVISION HISTORY: (`cvs log <>' for more)
+#       24Nov2004 Dan Kokron  - Created this file based on IRIX64 version
+#       01Oct99 - da Silva      - Linux with PGI version 
+#	02Apr96 - J. Guo	- New make procedure
+# 	21Aug95 - J. Guo	- added the prolog
+#
+#-----------------------------------------------------------------------
+
+# Environments
+# ============
+
+SHELL           = /bin/sh
+ARCH            = `uname -s`IA64
+F77             = ifort
+F90             = ifort
+FC              = $(F90)
+
+_I              = -I$(COREINC)/mpeu -I$(BASEDIR)/$(ARCH)/include/mpi
+LIBmpi		= -L$(BASEDIR)/$(ARCH)/lib -lmpi
+
+FFLAGS          = -O3 -r8 -cm -convert big_endian
+CPPFLAGS        = -cpp
+
+#.----------------------------------------------------------------------

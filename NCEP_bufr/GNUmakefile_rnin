@@ -1,0 +1,146 @@
+#
+# Makefile for ESMA components.
+#
+# REVISION HISTORY:
+#
+# 03mar2004  Zaslavsky  Initial imlementation.
+# 20Oct2004  da Silva   Standardization
+# 29mar2005  da Silva   Added dependencies, cleaned up.
+# 23Jan2009  Stassi     Use -DBIG_ENDIAN directive on big-endian machines
+#
+
+# Make sure ESMADIR is defined
+# ----------------------------
+ifndef ESMADIR
+       ESMADIR := $(PWD)/../..
+endif
+
+# Compilation rules, flags, etc
+# -----------------------------
+  include $(ESMADIR)/Config/ESMA_base.mk  # Generic stuff
+  include $(ESMADIR)/Config/ESMA_arch.mk  # System dependencies
+#  include $(ESMADIR)/Config/GMAO_base.mk 
+
+#                  ---------------------
+#                  Standard ESMA Targets
+#                  ---------------------
+
+
+DIRN := $(shell basename $(PWD))
+RN   := $(strip $(findstring r4,$(DIRN)) $(findstring r8,$(DIRN)))
+IN   := $(strip $(findstring i4,$(DIRN)) $(findstring i8,$(DIRN)))
+
+NLIB  = lib$(NTHIS).a
+THIS  = $(NTHIS)_$(RN)$(IN)
+LIB   = lib$(THIS).a
+NLIB  = lib$(NTHIS).a
+BINS  =
+
+NREAL := $(FREAL)
+NINT  := $(FINT)
+ifeq ($(RN),r4)
+      override FREAL = $(FREAL4)
+else
+      override FREAL = $(FREAL8)
+endif
+ifeq ($(IN),i4)
+      override FINT = $(FINT4)
+      I8DEF = 
+else
+      override FINT = $(FINT8)
+      I8DEF = -DF77_INTSIZE_8
+endif
+
+# $(error RN=|$(RN)|, IN=|$(IN)|, FINT=|$(FINT)|, LIB=|$(LIB)|)
+
+esma_install install: $(DEPS) $(LIB) $(BINS)
+	$(MKDIR) $(ESMALIB) $(ESMAETC) $(ESMAINC)/$(THIS) $(ESMABIN)
+	$(CP) -p *.a         $(ESMALIB)
+#	$(CP) -p *.mod       $(ESMAINC)/$(THIS)
+#	$(CP) -p *.rc        $(ESMAETC)
+#	$(CP) -p $(BINS)     $(ESMABIN)
+ifeq ($(DIRN),$(r8i4))
+	$(RM) -r $(ESMALIB)/$(NLIB) $(ESMAINC)/$(NTHIS)
+	$(LN) -s $(ESMALIB)/$(LIB)  $(ESMALIB)/$(NLIB)
+	$(LN) -s $(ESMAINC)/$(THIS) $(ESMAINC)/$(NTHIS)
+endif
+
+
+esma_clean clean:
+	$(RM) *~ *.[aox] *.[Mm][Oo][Dd]
+
+esma_distclean distclean:
+	$(RM) *~ *.[aoxd] *.[Mm][Oo][Dd]
+
+esma_doc doc:
+	@echo "Target $@ not implemented yet in `pwd`"
+
+esma_help help:
+	@echo "Standard ESMA targets:"
+	@echo "% make esma_install    (builds and install under ESMADIR)"
+	@echo "% make esma_clean      (removes deliverables: *.[aox], etc)"
+	@echo "% make esma_distclean  (leaves in the same state as cvs co)"
+	@echo "% make esma_doc        (generates PDF, installs under ESMADIR)"
+	@echo "% make esma_help       (this message)"
+	@echo "Environment:"
+	@echo "      ESMADIR = $(ESMADIR)"
+	@echo "      BASEDIR = $(BASEDIR)"
+	@echo "         ARCH = $(ARCH)"
+	@echo "         SITE = $(SITE)"
+	@echo "        FREAL = $(FREAL)"
+	@echo "   BYTE_ORDER =$(BYTE_ORDER)"
+
+#                  --------------------
+#                  User Defined Targets
+#                  --------------------
+
+SRCS := $(notdir $(wildcard ../*.f)) $(notdir $(wildcard ../*.c))
+OBJS := $(addsuffix .o, $(basename $(SRCS)))
+DEPS := $(addsuffix .d, $(basename $(SRCS))) \
+        $(addsuffix .d, $(basename $(BINS))) 
+
+FOPT = $(FOPT2)
+
+INC_DIRS = . ..
+MOD_DIRS = . ..
+USER_CINCS  = $(foreach dir,$(INC_DIRS),$(I)$(dir)) 
+USER_FINCS  = $(foreach dir,$(INC_DIRS),$(I)$(dir)) 
+USER_FMODS  = $(foreach dir,$(MOD_DIRS),$(M)$(dir)) 
+
+USER_FDEFS = 
+USER_CDEFS = -DSTATIC_ALLOCATION -DNFILES=32 -DMAXCD=250 -DMAXNC=600 -DMXNAF=3 \
+             -DUNDERSCORE $(I8DEF) 
+
+#USER_FFLAGS = $(BIG_ENDIAN) 
+ifeq ($(BYTE_ORDER), BIG_ENDIAN)
+   FFLAGS += $(D)BIG_ENDIAN
+endif
+
+vpath % $(INC_DIRS) 
+
+$(LIB) lib : $(DEPS) $(OBJS)
+	$(RM) $(LIB)
+	$(AR) $(AR_FLAGS) $(LIB) $(OBJS)
+
+ifeq ($(ARCH),Darwin)
+%.prm : %.PRMM
+	$(CPP) $(CPPFLAGS) $*.PRMM $@
+endif # Darwin
+
+%.x : $(LIB) %.o
+	$(FC) $(LDFLAGS) -o $@ $*.o $(LIB) \
+              $(LIB_MPEU) $(LIB_GFIO) $(LIB_SDF)
+
+# Remove .F from list of suffixes so that *.F files are not used to build
+# dependency files or to create object files; only include needed suffixes
+# ------------------------------------------------------------------------
+.SUFFIXES:
+.SUFFIXES: .f .c .d .o
+
+# Hack to prevent remaking dep files during cleaning
+# --------------------------------------------------
+  ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
+    -include $(DEPS)
+  endif
+
+#.

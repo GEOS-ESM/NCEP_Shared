@@ -1,0 +1,6 @@
+FC	= xlf
+FFLAGS	= -O -qnosave -q free=f90 -I$(INCMOD)
+#FFLAGS	= -g -C -qextchk -qflttrap -qnosave -g -q free=f90 -I$(INCMOD)
+AR	= ar
+ARFLAGS	= -rv -X64
+

@@ -1,0 +1,6 @@
+# Default values for IRIX 32
+# --------------------------
+FC     = f90
+F77    = $(FC)
+F90    = $(FC)
+FFLAGS = -O2 -i4 -r4 -n32

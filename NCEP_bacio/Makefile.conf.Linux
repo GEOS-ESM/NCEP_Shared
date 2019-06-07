@@ -1,0 +1,10 @@
+# Default values for LINUX
+# ------------------------
+FC     = lf95
+F77    = $(FC)
+F90    = $(FC)
+_RPREC = 4
+_IPREC = 4
+FFLAGS = -O3 -r$(_RPREC) -i$(_IPREC) -64
+CC     = cc
+CFLAGS  = -O3 -DLINUX

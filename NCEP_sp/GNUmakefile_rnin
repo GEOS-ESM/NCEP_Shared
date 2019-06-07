@@ -1,0 +1,151 @@
+#
+# Makefile for ESMA components.
+#
+# REVISION HISTORY:
+#
+# 03mar2004  Zaslavsky  Initial imlementation.
+# 20Oct2004  da Silva   Standardization
+# 29mar2005  da Silva   Added dependencies, cleaned up.
+#
+
+# Make sure ESMADIR is defined
+# ----------------------------
+ifndef ESMADIR
+       ESMADIR := $(PWD)/../..
+endif
+
+# Compilation rules, flags, etc
+# -----------------------------
+  include $(ESMADIR)/Config/ESMA_base.mk  # Generic stuff
+  include $(ESMADIR)/Config/ESMA_arch.mk  # System dependencies
+#  include $(ESMADIR)/Config/GMAO_base.mk 
+
+#                  ---------------------
+#                  Standard ESMA Targets
+#                  ---------------------
+
+
+DIRN := $(shell basename $(PWD))
+RN   := $(strip $(findstring r4,$(DIRN)) $(findstring r8,$(DIRN)))
+IN   := $(strip $(findstring i4,$(DIRN)) $(findstring i8,$(DIRN)))
+
+NLIB  = lib$(NTHIS).a
+THIS  = $(NTHIS)_$(RN)$(IN)
+LIB   = lib$(THIS).a
+NLIB  = lib$(NTHIS).a
+BINS  =
+
+NREAL := $(FREAL)
+NINT  := $(FINT)
+ifeq ($(RN),r4)
+      override FREAL = $(FREAL4)
+else
+      override FREAL = $(FREAL8)
+endif
+ifeq ($(IN),i4)
+      override FINT = $(FINT4)
+else
+      override FINT = $(FINT8)
+endif
+
+# Set the switch of using FFT lib on different local system.  It
+# is too bad that this is a site specific problem.
+
+ME := $(shell uname -n | sed -e 's/[0-9]*$$//' | sed -e 's/borg[a-z]/borg/')
+
+ifneq (,$(filter $(ME),palm e))
+	SPFFTE_SRCS := spfftesgi.f sgi_fft.f
+else
+ifneq (,$(filter $(ME),discover borg))
+	SPFFTE_SRCS := spffte.f
+else
+	SPFFTE_SRCS := spffte.f
+endif
+endif
+
+# $(error RN=|$(RN)|, IN=|$(IN)|, FINT=|$(FINT)|, LIB=|$(LIB)|)
+
+esma_install install: $(DEPS) $(LIB) $(BINS)
+	$(MKDIR) $(ESMALIB) $(ESMAETC) $(ESMAINC)/$(THIS) $(ESMABIN)
+	$(CP) -p *.a         $(ESMALIB)
+#	$(CP) -p *.mod       $(ESMAINC)/$(THIS)
+#	$(CP) -p *.rc        $(ESMAETC)
+#	$(CP) -p $(BINS)     $(ESMABIN)
+ifeq ($(DIRN),$(r8i4))
+	$(RM) -r $(ESMALIB)/$(NLIB) $(ESMAINC)/$(NTHIS)
+	$(LN) -s $(ESMALIB)/$(LIB)  $(ESMALIB)/$(NLIB)
+	$(LN) -s $(ESMAINC)/$(THIS) $(ESMAINC)/$(NTHIS)
+endif
+
+
+esma_clean esma_distclean clean distclean:
+	$(RM) *~ *.[aoxd] *.[Mm][Oo][Dd] *.x
+
+esma_doc doc:
+	@echo "Target $@ not implemented yet in `pwd`"
+
+esma_help help:
+	@echo "Standard ESMA targets:"
+	@echo "% make esma_install    (builds and install under ESMADIR)"
+	@echo "% make esma_clean      (removes deliverables: *.[aox], etc)"
+	@echo "% make esma_distclean  (leaves in the same state as cvs co)"
+	@echo "% make esma_doc        (generates PDF, installs under ESMADIR)"
+	@echo "% make esma_help       (this message)"
+	@echo "Environment:"
+	@echo "      ESMADIR = $(ESMADIR)"
+	@echo "      BASEDIR = $(BASEDIR)"
+	@echo "         ARCH = $(ARCH)"
+	@echo "         SITE = $(SITE)"
+	@echo "        FREAL = $(FREAL)"
+	@echo "         FINT = $(FINT)"
+	@echo "  SPFFTE_SRCS =" $(SPFFTE_SRCS)
+	@echo " SCILIB_CLASS =" $(SCILIB_CLASS)
+
+#                  --------------------
+#                  User Defined Targets
+#                  --------------------
+
+SRCS  := bll2ps.f ncpus.f spanaly.f spdz2uv.f speps.f $(SPFFTE_SRCS) \
+        spgradq.f splaplac.f splat.f splegend.f sppad.f spsynth.f \
+        sptez.f sptezd.f sptezm.f sptezmv.f sptezv.f sptgpm.f sptgpmd.f \
+        sptgpmv.f sptgps.f sptgpsd.f sptgpsv.f sptgpt.f sptgptd.f sptgptv.f \
+        sptran.f  sptrand.f sptranf.f sptranf0.f sptranf1.f \
+        sptranfv.f sptranv.f sptrun.f \
+        sptrund.f sptrung.f sptrungv.f sptrunl.f sptrunm.f sptrunmv.f \
+        sptruns.f sptrunsv.f sptrunv.f spuv2dz.f spvar.f spwget.f
+
+OBJS := $(addsuffix .o, $(basename $(SRCS)))
+DEPS := $(addsuffix .d, $(basename $(SRCS))) \
+        $(addsuffix .d, $(basename $(BINS))) 
+
+FOPT = $(FOPT2)
+
+INC_DIRS = . ..
+MOD_DIRS = . ..
+USER_CINCS  = $(foreach dir,$(INC_DIRS),$(I)$(dir)) 
+USER_FINCS  = $(foreach dir,$(INC_DIRS),$(I)$(dir)) 
+USER_FMODS  = $(foreach dir,$(MOD_DIRS),$(M)$(dir)) 
+
+USER_FDEFS = 
+USER_CDEFS =
+
+USER_FFLAGS = # $(BIG_ENDIAN) 
+ 
+vpath % $(INC_DIRS) 
+
+$(LIB) lib : $(DEPS) $(OBJS)
+	$(RM) $(LIB)
+	$(AR) $(AR_FLAGS) $(LIB) $(OBJS)
+	$(RANLIB) $(RANLIB_FLAGS) $(LIB)
+
+%.x : $(LIB) %.o
+	$(FC) $(LDFLAGS) -o $@ $*.o $(LIB) \
+              $(LIB_MPEU) $(LIB_GFIO) $(LIB_SDF)
+
+# Hack to prevent remaking dep files during cleaning
+# --------------------------------------------------
+  ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
+    -include $(DEPS)
+  endif
+
+#.

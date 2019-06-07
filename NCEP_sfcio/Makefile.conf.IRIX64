@@ -1,0 +1,6 @@
+FC	= f90
+FFLAGS	= -O -64 $(_I)
+LDFLAGS	= -64
+AR	= ar
+ARFLAGS	= cq
+

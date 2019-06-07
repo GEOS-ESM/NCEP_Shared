@@ -1,0 +1,5 @@
+FC	= f90
+FFLAGS	= -O -convert big_endian -assume byterecl -fast -arch ev67 -tune ev67 $(_I)
+AR	= ar
+ARFLAGS	= cq
+

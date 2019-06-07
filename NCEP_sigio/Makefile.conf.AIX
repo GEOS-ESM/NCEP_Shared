@@ -1,0 +1,8 @@
+# Default values for AIX
+# ----------------------
+FC     = xlf90
+F77    = $(FC)
+F90    = $(FC)
+FFLAGS = -O2 -b64 -qsuffix=f=f90
+AR     = ar -X64 -v -q
+

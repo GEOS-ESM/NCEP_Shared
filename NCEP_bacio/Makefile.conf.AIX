@@ -1,0 +1,12 @@
+# Default values for AIX
+# --------------------------
+FC     = xlf90
+F77    = $(FC)
+F90    = $(FC)
+_RPREC = 4
+_IPREC = 4
+FFLAGS = -I. -O3 -qrealsize=$(_RPREC) -qintsize=$(_IPREC) -qfixed -b64 -D__aix__
+CC     = cc
+CFLAGS  = -I. -O3 -q64 -D__aix__ -DIBM4
+AR     = ar -X64 -v -q
+
