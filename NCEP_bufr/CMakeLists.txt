@@ -10,7 +10,7 @@ set (srcs
   bort_exit.c cpmstabs.c icvidx.c  stseq.c
   ccbfl.c crbmg.c nummtb.c  wrdesc.c
   adn30.f arallocf.F ardllocf.F atrcpt.f
-  bfrini.f blocks.f bort.f bort2.f bufrlib.PRM bufrlib.h bvers.f 
+  bfrini.f blocks.f bort.f bort2.f bufrlib.prm bufrlib.h bvers.f 
   cadn30.f capit.f chekstab.f chrtrn.f chrtrna.f cktaba.f
   closbf.f closmg.f cmpmsg.f cmsgini.f cnved4.f cobfl.h conwin.f
   copybf.f copymg.f copysb.f cpbfdx.f cpdxmm.f cpymem.f cpyupd.f
