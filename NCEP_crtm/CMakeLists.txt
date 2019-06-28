@@ -139,6 +139,11 @@ set (SRCS
   CRTM_NLTECorrection.f90 NLTE_Parameters.f90 NLTE_Predictor_Define.f90 NLTE_Predictor_IO.f90
 )
 
+if (CMAKE_Fortran_COMPILER_ID MATCHES Intel)
+   set (CMAKE_Fortran_FLAGS_RELEASE "-free ${FOPT2} ${LITTLE_ENDIAN} ${BYTERECLEN}")
+endif ()
+
+
 esma_add_library (${this}
   SRCS ${SRCS}
   )
