@@ -39,4 +39,11 @@ elseif (precision MATCHES "r8i8")
   endforeach ()
   target_compile_options (${this} PRIVATE ${FINT8})
 endif ()
-    
+
+ecbuild_add_executable(
+   TARGET ndate_${precision}.x
+   SOURCES ndate.f
+   LIBS NCEP_w3_${precision}
+   )
+
+
