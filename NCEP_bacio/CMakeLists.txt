@@ -11,10 +11,7 @@ set (CMAKE_Fortran_FLAGS_RELEASE "-O3 ${GEOS_Fortran_Release_FPE_Flags} ${ALIGNC
 
 esma_add_library(${this} SRCS ${srcs})
 
-set (LOCAL_CFLAGS -O -I. -O3 )
-foreach (flag ${LOCAL_CFLAGS})
-   target_compile_options (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:${flag}>)
-endforeach ()
+set (CMAKE_C_FLAGS_RELEASE "-O -I . -DLINUX -Dfunder -DFortranByte=char -DFortranInt=int -DFortranLlong='long long' -O3 -fPIC")
 
 # MAT Note that all the funder FortranByte, etc. in the GNUmake file are not used!
 set (LOCAL_CDEFS LINUX)
