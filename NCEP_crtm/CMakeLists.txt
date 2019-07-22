@@ -147,3 +147,5 @@ endif ()
 esma_add_library (${this}
   SRCS ${SRCS}
   )
+
+set_target_properties(${this} PROPERTIES POSITION_INDEPENDENT_CODE OFF)
