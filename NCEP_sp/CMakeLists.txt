@@ -18,7 +18,11 @@ set (CMAKE_Fortran_FLAGS_RELEASE "-O2 ${GEOS_Fortran_Release_FPE_Flags} ${EXTEND
 
 esma_add_library (${this} SRCS ${srcs} DEPENDENCIES NCEP_w3_${precision})
 
-target_link_libraries(${this} PUBLIC ${LAPACK_LIBRARIES})
+if (MKL_FOUND)
+   target_link_libraries(${this} PUBLIC ${MKL_LIBRARIES})
+else ()
+   target_link_libraries(${this} PUBLIC ${LAPACK_LIBRARIES})
+endif ()
 
 if (precision MATCHES "r4i4")
   # use default real/int precisions
