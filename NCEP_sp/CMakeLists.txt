@@ -18,10 +18,16 @@ set (CMAKE_Fortran_FLAGS_RELEASE "-O2 ${GEOS_Fortran_Release_FPE_Flags} ${EXTEND
 
 esma_add_library (${this} SRCS ${srcs} DEPENDENCIES NCEP_w3_${precision})
 
+if (APPLE)
+   set(MKL_Fortran TRUE)
+endif ()
+find_package(MKL)
 if (MKL_FOUND)
-   target_link_libraries(${this} PUBLIC ${MKL_LIBRARIES})
+   set(BLA_VENDOR Intel10_64lp_seq)
+   target_link_libraries(${this} PRIVATE ${MKL_LIBRARIES})
 else ()
-   target_link_libraries(${this} PUBLIC ${LAPACK_LIBRARIES})
+   find_package(LAPACK REQUIRED)
+   target_link_libraries(${this} PRIVATE ${LAPACK_LIBRARIES})
 endif ()
 
 if (precision MATCHES "r4i4")
