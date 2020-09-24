@@ -63,7 +63,7 @@ set (srcs
    dxmini.f
    elemdx.f
    errwrt.f
-   exitbufr.f
+   exitbufr.F
    fstag.f
    getabdb.f
    getbmiss.f
