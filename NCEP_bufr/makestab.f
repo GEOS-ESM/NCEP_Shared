@@ -61,6 +61,8 @@ C                           INFORMATION WHEN A TABLE HAS BEEN RE-READ
 C                           WITHIN A SHARED LOGICAL UNIT BUT HASN'T
 C                           REALLY CHANGED
 C 2014-12-10  J. ATOR    -- USE MODULES INSTEAD OF COMMON BLOCKS
+C 2017-04-03  J. ATOR    -- INCLUDE MODULE BITMAPS AND INITIALIZATION
+C                           OF NTAMC
 C
 C USAGE:    CALL MAKESTAB
 C
@@ -85,15 +87,15 @@ C$$$
       USE MODA_XTAB
       USE MODA_TABABD
       USE MODA_TABLES
+      USE MODA_NRV203
+      USE MODA_BITMAPS
 
       INCLUDE 'bufrlib.prm'
 
       COMMON /QUIET/  IPRT
-      COMMON /NRV203/ NNRV,INODNRV(MXNRV),NRV(MXNRV),TAGNRV(MXNRV),
-     .                ISNRV(MXNRV),IENRV(MXNRV),IBTNRV,IPFNRV
 
       CHARACTER*128 BORT_STR,ERRSTR
-      CHARACTER*8   NEMO,TAGNRV
+      CHARACTER*8   NEMO
       LOGICAL       EXPAND
 
 C-----------------------------------------------------------------------
@@ -104,6 +106,7 @@ C  ------------------------------------
 
       NTAB = 0
       NNRV = 0
+      NTAMC = 0
       CALL STRCLN
 
 C  FIGURE OUT WHICH UNITS SHARE TABLES
