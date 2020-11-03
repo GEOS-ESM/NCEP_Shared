@@ -60,6 +60,10 @@ C                           EMBEDDED DICTIONARY MESSAGES
 C 2014-12-03  J. ATOR    -- USE PKX TO PACK LOCAL REFERENCE VALUE FOR
 C                           CHARACTER STRINGS
 C 2014-12-10  J. ATOR    -- USE MODULES INSTEAD OF COMMON BLOCKS
+C 2015-09-24  D. STOKES  -- INCLUDE EDGE4 IN SAVE LIST
+C 2016-03-18  J. ATOR    -- FIX BUG INVOLVING ENCODING OF LONG CHARACTER
+C                           STRINGS (VIA WRITLC) INTO MESSAGES WHICH
+C                           ALSO CONTAIN DELAYED REPLICATION SEQUENCES
 C
 C USAGE:    CALL WRCMPS (LUNIX)
 C   INPUT ARGUMENT LIST:
@@ -113,7 +117,7 @@ C                 TO BE WRITTEN OUT
  
       DATA	FIRST /.TRUE./
 
-      SAVE	FIRST,IBYT,JBIT,SUBSET
+      SAVE	FIRST,IBYT,JBIT,SUBSET,EDGE4
  
 C-----------------------------------------------------------------------
       RLN2 = 1./LOG(2.)
@@ -188,7 +192,9 @@ C  ---------------------------------------------------
       IF(NCOL+1.GT.MXCSB) THEN
          GOTO 50
       ELSEIF(NVAL(LUN).NE.NROW) THEN
-         GOTO 50
+         WRIT1 = .TRUE.
+         ICOL = 1
+         GOTO 20
       ELSEIF(NVAL(LUN).GT.MXCDV) THEN
          GOTO 901
       ENDIF
