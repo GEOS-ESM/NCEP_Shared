@@ -43,7 +43,7 @@ endif ()
 ecbuild_add_executable(
    TARGET ndate_${precision}.x
    SOURCES ndate.f
-   LIBS NCEP_w3_${precision}
+   LIBS NCEP_w3_${precision} NCEP_bufr_${precision} NCEP_bacio_${precision}
    )
 
 
