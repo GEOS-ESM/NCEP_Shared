@@ -27,7 +27,8 @@ MODULE CRTM_Forward_Module
                                         MAX_SOURCE_ZENITH_ANGLE, &
                                         MAX_N_STREAMS, &
                                         AIRCRAFT_PRESSURE_THRESHOLD, &
-                                        SCATTERING_ALBEDO_THRESHOLD
+                                        SCATTERING_ALBEDO_THRESHOLD, &
+                                        RT_ADA, RT_SOI
   USE CRTM_SpcCoeff,              ONLY: SC, &
                                         SpcCoeff_IsVisibleSensor, &
                                         SpcCoeff_IsMicrowaveSensor
@@ -67,8 +68,10 @@ MODULE CRTM_Forward_Module
                                         CRTM_AtmOptics_Create    , &
                                         CRTM_AtmOptics_Destroy   , &
                                         CRTM_AtmOptics_Zero
-  USE CRTM_AerosolScatter,        ONLY: CRTM_Compute_AerosolScatter
-  USE CRTM_CloudScatter,          ONLY: CRTM_Compute_CloudScatter
+  USE CRTM_AerosolScatter,        ONLY: CRTM_Compute_AerosolScatter , &
+                                        CRTM_Compute_AerosolPhaseFnc
+  USE CRTM_CloudScatter,          ONLY: CRTM_Compute_CloudScatter , &
+                                        CRTM_Compute_CloudPhaseFnc
   USE CRTM_AtmOptics,             ONLY: CRTM_Include_Scattering   , &
                                         CRTM_Compute_Transmittance, &
                                         CRTM_AtmOptics_Combine    , &
@@ -560,8 +563,6 @@ CONTAINS
       END IF
 
 
-
-
       ! -----------
       ! SENSOR LOOP
       ! -----------
@@ -655,22 +656,6 @@ CONTAINS
           CALL CRTM_AtmOptics_Zero( AtmOptics_Clear )
           CALL CRTM_RTSolution_Zero( RTSolution_Clear )
 
-
-          ! Determine the number of streams (n_Full_Streams) in up+downward directions
-          IF ( Opt%Use_N_Streams ) THEN
-            n_Full_Streams = Opt%n_Streams
-            RTSolution(ln,m)%n_Full_Streams = n_Full_Streams + 2
-            RTSolution(ln,m)%Scattering_Flag = .TRUE.
-          ELSE
-            n_Full_Streams = CRTM_Compute_nStreams( Atm             , &  ! Input
-                                                    SensorIndex     , &  ! Input
-                                                    ChannelIndex    , &  ! Input
-                                                    RTSolution(ln,m)  )  ! Output
-          END IF
-          ! ...Transfer stream count to scattering structure
-          AtmOptics%n_Legendre_Terms = n_Full_Streams
-
-
           ! Compute the gas absorption
           CALL CRTM_Compute_AtmAbsorption( SensorIndex   , &  ! Input
                                            ChannelIndex  , &  ! Input
@@ -678,6 +663,81 @@ CONTAINS
                                            Predictor     , &  ! Input
                                            AtmOptics     , &  ! Output
                                            AAvar           )  ! Internal variable output
+
+          ! Compute the cloud particle absorption/scattering properties
+          IF( Atm%n_Clouds > 0 ) THEN
+            Error_Status = CRTM_Compute_CloudScatter( Atm         , &  ! Input
+                                                      SensorIndex , &  ! Input
+                                                      ChannelIndex, &  ! Input
+                                                      AtmOptics   , &  ! Output
+                                                      CSvar         )  ! Internal variable output
+            IF ( Error_Status /= SUCCESS ) THEN
+              WRITE( Message,'("Error computing CloudScatter for ",a,&
+                     &", channel ",i0,", profile #",i0)' ) &
+                     TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
+              CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
+              RETURN
+            END IF
+          END IF
+
+
+          ! Compute the aerosol absorption/scattering properties
+          IF ( Atm%n_Aerosols > 0 ) THEN
+            Error_Status = CRTM_Compute_AerosolScatter( Atm         , &  ! Input
+                                                        SensorIndex , &  ! Input
+                                                        ChannelIndex, &  ! Input
+                                                        AtmOptics   , &  ! In/Output
+                                                        ASvar         )  ! Internal variable output
+            IF ( Error_Status /= SUCCESS ) THEN
+              WRITE( Message,'("Error computing AerosolScatter for ",a,&
+                     &", channel ",i0,", profile #",i0)' ) &
+                     TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
+              CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
+              RETURN
+            END IF
+          END IF
+ 
+          ! Determine the number of streams (n_Full_Streams) in up+downward directions
+!          IF ( Opt%Use_N_Streams ) THEN
+!            n_Full_Streams = Opt%n_Streams
+!            RTSolution(ln,m)%n_Full_Streams = n_Full_Streams + 2
+!            RTSolution(ln,m)%Scattering_Flag = .TRUE.
+!          ELSE
+!            IF ( RTV%RT_Algorithm_Id .EQ. RT_ADA .OR. RTV%RT_Algorithm_Id .EQ. RT_SOI ) THEN
+!              n_Full_Streams = CRTM_Compute_nStreams( Atm             , &  ! Input
+!                                                      SensorIndex     , &  ! Input
+!                                                      ChannelIndex    , &  ! Input
+!                                                      RTSolution(ln,m)  )  ! Output
+!            ELSE
+!              ! Special case for P2S and EDD solvers
+!              n_Full_Streams = 2
+!              RTSolution(ln,m)%n_Full_Streams = n_Full_Streams + 2
+!              RTSolution(ln,m)%Scattering_Flag = .TRUE.
+!              AtmOptics%Delta_Adjust = .FALSE.
+!            END IF
+!          END IF
+          ! ...Transfer stream count to scattering structure
+!          AtmOptics%n_Legendre_Terms = n_Full_Streams
+
+!***************** SI code
+          ! Determine the number of streams (n_Full_Streams) in up+downward directions
+          IF ( AtmOptics%Include_Scattering ) THEN
+            IF ( Opt%Use_N_Streams ) THEN
+              n_Full_Streams = Options(m)%n_Streams
+              RTSolution(ln,m)%n_Full_Streams = n_Full_Streams + 2
+              RTSolution(ln,m)%Scattering_Flag = .TRUE.
+            ELSE
+              n_Full_Streams = CRTM_Compute_nStreams( Atm             , &  ! Input
+                                                      AtmOptics       , &  ! Input
+                                                      GeometryInfo    , &  ! Input
+                                                      SensorIndex     , &  ! Input
+                                                      ChannelIndex    , &  ! Input
+                                                      RTSolution(ln,m)  )  ! Output
+            END IF
+          END IF
+          ! ...Transfer stream count to scattering structure
+          AtmOptics%n_Legendre_Terms = n_Full_Streams
+!**************************
 
 
           ! Compute the molecular scattering properties
@@ -735,15 +795,15 @@ CONTAINS
           END IF
 
 
-          ! Compute the cloud particle absorption/scattering properties
-          IF( Atm%n_Clouds > 0 ) THEN
-            Error_Status = CRTM_Compute_CloudScatter( Atm         , &  ! Input
-                                                      SensorIndex , &  ! Input
-                                                      ChannelIndex, &  ! Input
-                                                      AtmOptics   , &  ! Output
-                                                      CSvar         )  ! Internal variable output
+          ! Compute the cloud particle scattering phase function
+          IF( Atm%n_Clouds > 0 .AND. RTSolution(ln,m)%Scattering_Flag ) THEN
+            Error_Status = CRTM_Compute_CloudPhaseFnc( Atm         , &  ! Input
+                                                       SensorIndex , &  ! Input
+                                                       ChannelIndex, &  ! Input
+                                                       AtmOptics   , &  ! Output
+                                                       CSvar         )  ! Internal variable output
             IF ( Error_Status /= SUCCESS ) THEN
-              WRITE( Message,'("Error computing CloudScatter for ",a,&
+              WRITE( Message,'("Error computing CloudPhaseFnc for ",a,&
                      &", channel ",i0,", profile #",i0)' ) &
                      TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
               CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
@@ -751,24 +811,22 @@ CONTAINS
             END IF
           END IF
 
-
-          ! Compute the aerosol absorption/scattering properties
-          IF ( Atm%n_Aerosols > 0 ) THEN
-            Error_Status = CRTM_Compute_AerosolScatter( Atm         , &  ! Input
-                                                        SensorIndex , &  ! Input
-                                                        ChannelIndex, &  ! Input
-                                                        AtmOptics   , &  ! In/Output
-                                                        ASvar         )  ! Internal variable output
+          ! Compute the aerosol particle scattering phase function
+          IF ( Atm%n_Aerosols > 0 .AND. RTSolution(ln,m)%Scattering_Flag ) THEN
+            Error_Status = CRTM_Compute_AerosolPhaseFnc( Atm         , &  ! Input
+                                                         SensorIndex , &  ! Input
+                                                         ChannelIndex, &  ! Input
+                                                         AtmOptics   , &  ! In/Output
+                                                         ASvar         )  ! Internal variable output
             IF ( Error_Status /= SUCCESS ) THEN
-              WRITE( Message,'("Error computing AerosolScatter for ",a,&
+              WRITE( Message,'("Error computing AerosolPhaseFnc for ",a,&
                      &", channel ",i0,", profile #",i0)' ) &
                      TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
               CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
               RETURN
             END IF
           END IF
-
-
+ 
           ! Compute the combined atmospheric optical properties
           IF( AtmOptics%Include_Scattering ) THEN
             CALL CRTM_AtmOptics_Combine( AtmOptics, AOvar )

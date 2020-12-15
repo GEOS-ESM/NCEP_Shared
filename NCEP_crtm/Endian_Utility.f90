@@ -567,21 +567,32 @@ END MODULE Endian_Utility
 ! $Name$
 !
 ! $Log$
-! Revision 1.6.12.5.2.13  2018/02/20 18:01:18  jguo
-! Path: .
-! URL: https://svnemc.ncep.noaa.gov/projects/crtm/releases/REL-2.3.0/libsrc
-! Repository Root: https://svnemc.ncep.noaa.gov/projects
-! Repository UUID: 281fb692-3a18-0410-826d-9e847983f365
-! Revision: 99822
-! Node Kind: directory
-! Schedule: normal
-! Last Changed Author: tong.zhu@noaa.gov
-! Last Changed Rev: 99117
-! Last Changed Date: 2017-11-27 13:37:14 -0500 (Mon, 27 Nov 2017)
+! Revision 1.6.12.5.2.14  2018/04/25 22:10:47  jguo
+! Downloaded crtm source codes (.tar) from Tom Greenwald by Min-Jeong, which
+! is labeled as crtm_v2.3.0_r100045_source.
 !
-! ------------------------------------------------------------------------
+! Following files are missing from the collection.  They are then patched
+! with revisions from ncep-crtm-REL-2_3_0-r99117.
 !
-! Revision 1.1  2018/02/20 17:56:09  jguo
+! .cvsignore
+! CRTM_Module.fpp
+! CRTM_Version.inc
+! FitCoeff_Destroy.inc
+! FitCoeff_Equal.inc
+! FitCoeff_Info.inc
+! FitCoeff_ReadFile.inc
+! FitCoeff_SetValue.inc
+! FitCoeff_WriteFile.inc
+! Makefile.in
+! README
+! make.dependencies
+! make.filelist
+! make.rules
+!
+! make.filelist is modified with two new files, EDD_Modules.f90 and
+! P2S_Module.f90.
+!
+! Revision 1.1  2018/04/25 21:32:13  jguo
 ! co -kk -l Endian_Utility.f90  # to remove keyword values
 !
 ! Revision 2.3  2004/12/01 19:35:15  paulv

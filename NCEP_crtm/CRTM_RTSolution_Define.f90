@@ -128,6 +128,7 @@ MODULE CRTM_RTSolution_Define
     LOGICAL :: Scattering_Flag = .TRUE.
     INTEGER :: n_Full_Streams  = 0
     INTEGER :: n_Stokes        = 0
+    REAL(fp) :: ScatInd        = ZERO
     ! Forward radiative transfer intermediate results for a single channel
     !    These components are not defined when they are used as TL, AD
     !    and K variables

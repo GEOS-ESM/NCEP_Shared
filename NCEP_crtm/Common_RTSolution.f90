@@ -19,7 +19,8 @@ MODULE Common_RTSolution
   USE CRTM_Parameters,           ONLY: ONE, ZERO, PI, &
                                        DEGREES_TO_RADIANS, &
                                        SECANT_DIFFUSIVITY, &
-                                       SCATTERING_ALBEDO_THRESHOLD
+                                       SCATTERING_ALBEDO_THRESHOLD, &
+                                       RT_ADA, RT_SOI, RT_P2S, RT_EDD
   USE Message_Handler,           ONLY: SUCCESS, Display_Message
   USE CRTM_Atmosphere_Define,    ONLY: CRTM_Atmosphere_type
   USE CRTM_Surface_Define,       ONLY: CRTM_Surface_type
@@ -1118,14 +1119,22 @@ CONTAINS
     
     Error_Status = SUCCESS
     
-    ! ADA and SOI specific assignments
+    ! ADA, SOI, P2S and EDD specific assignments
     IF( RTV%Scattering_RT ) THEN
       
       ! Assign radiance output from ADA or SOI
       IF ( RTV%aircraft%rt ) THEN
-        Radiance = RTV%s_Level_Rad_UP(SfcOptics%Index_Sat_Ang, RTV%aircraft%idx)
+        IF ( RTV%RT_Algorithm_Id .EQ. RT_ADA .OR. RTV%RT_Algorithm_Id  .EQ. RT_SOI ) THEN 
+          Radiance = RTV%s_Level_Rad_UP(SfcOptics%Index_Sat_Ang, RTV%aircraft%idx)
+        ELSE
+          Radiance = RTV%s_Rad_UP
+        END IF
       ELSE
-        Radiance = RTV%s_Level_Rad_UP(SfcOptics%Index_Sat_Ang, 0)
+        IF ( RTV%RT_Algorithm_Id .EQ. RT_ADA .OR. RTV%RT_Algorithm_Id  .EQ. RT_SOI ) THEN 
+          Radiance = RTV%s_Level_Rad_UP(SfcOptics%Index_Sat_Ang, 0)
+        ELSE
+          Radiance = RTV%s_Rad_UP
+        END IF
       END IF
     
     ! Emission specific assignments

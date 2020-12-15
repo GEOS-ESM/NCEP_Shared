@@ -109,6 +109,8 @@ MODULE CRTM_AtmOptics_Define
     INTEGER :: Max_Phase_Elements = 0  ! Ip-Max dimension
     ! Scalar components
     LOGICAL  :: Include_Scattering = .TRUE.
+    LOGICAL  :: Scattering_Indicator = .TRUE.
+    LOGICAL  :: Delta_Adjust       = .TRUE.
     INTEGER  :: lOffset = 0   ! Start position in array for Legendre coefficients
     REAL(fp) :: Scattering_Optical_Depth = ZERO
     ! Array components

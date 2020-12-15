@@ -126,7 +126,6 @@ CONTAINS
     !    CALL  multiple-stream algorithm for computing layer       !
     !    transmission, reflection, and source functions.           !
     !  ----------------------------------------------------------- !
-
     CALL CRTM_AMOM_layer( &
            RTV%n_Streams,            &
            RTV%n_Angles,k,w(k),      &
