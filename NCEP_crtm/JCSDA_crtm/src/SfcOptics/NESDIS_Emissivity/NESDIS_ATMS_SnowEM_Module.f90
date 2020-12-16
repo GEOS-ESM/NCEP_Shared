@@ -78,16 +78,6 @@
 !
 !  Copyright (C) 2012 Fuzhong Weng and Ming Chen
 !
-!  This program is free software; you can redistribute it and/or modify it under the terms of the GNU
-!  General Public License as published by the Free Software Foundation; either version 2 of the License,
-!  or (at your option) any later version.
-!
-!  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
-!  the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
-!  License for more details.
-!
-!  You should have received a copy of the GNU General Public License along with this program; if not, write
-!  to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 !M-
 !--------------------------------------------------------------------------------
 
@@ -96,9 +86,9 @@ MODULE NESDIS_ATMS_SnowEM_Module
   USE Type_Kinds
   USE NESDIS_LandEM_Module
   USE NESDIS_SnowEM_ATMS_Parameters
+  USE NESDIS_SnowEM_Parameters  
   IMPLICIT NONE
 
-! Visibilities
   PRIVATE
   PUBLIC  :: NESDIS_ATMS_SNOWEM
 
@@ -256,19 +246,11 @@ CONTAINS
    !                       Ming Chen, IMSG Inc., ming.chen@noaa.gov (04-28-2012)
    !                       Fuzhong Weng, NOAA/NESDIS/ORA, Fuzhong.Weng@noaa.gov
    !
+   !       Modified by:   James Rosinski, UCAR/JCSDA,  Rosinski@ucar.edu (02-09-2019)
    !
    !  Copyright (C) 2005 Fuzhong Weng and Ming Chen
+   !  Copyright (C) 2019 James Rosinski
    !
-   !  This program is free software; you can redistribute it and/or modify it under the terms of the GNU
-   !  General Public License as published by the Free Software Foundation; either version 2 of the License,
-   !  or (at your option) any later version.
-   !
-   !  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
-   !  the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
-   !  License for more details.
-   !
-   !  You should have received a copy of the GNU General Public License along with this program; if not, write
-   !  to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
    !
    !------------------------------------------------------------------------------------------------------------
 
@@ -291,12 +273,17 @@ CONTAINS
      REAL(fp),INTENT(IN),  OPTIONAL  :: Tbs(:), Tss, Snow_Depth
      REAL(fp),INTENT(OUT)            :: Emissivity_H,Emissivity_V
      REAL(fp) :: em_vector(2),esh1,esv1,esh2,esv2,desh,desv,dem
-     REAL(fp) :: Ts = 273.15 ! default skin-surface temperature
-     INTEGER :: Snow_Type = 4 ! default snow type
+     REAL(fp) :: Ts
+     INTEGER :: Snow_Type
      INTEGER :: i
 
-     LOGICAL  :: VALID_SNOW_DEPTH = .FALSE.
-     INTEGER  :: input_type = 0
+     LOGICAL  :: VALID_SNOW_DEPTH
+     INTEGER  :: input_type
+
+     Ts = 273.15   ! default skin-surface temperature
+     Snow_Type = 4 ! default snow type
+     VALID_SNOW_DEPTH = .FALSE.
+     input_type = 0
 
    ! Analyze the input types and determine which algorithms to be used
 
@@ -351,8 +338,15 @@ CONTAINS
              CALL ATMS_SNOW_ByTypes(Frequency,Snow_Type,em_vector)
            ENDIF
      END SELECT
-   ! the above regression-based snow-typing algs are superseded by the diagnosis-based snow-typing
-     CALL ATMS_SNOW_ByTBTs_D(Frequency,Tbs,Ts,Snow_Type,em_vector)
+
+    IF (ANY(Tbs((/1,2,3,4,5/)) < 50.0_fp) .OR. ANY(TBs((/1,2,3,4,5/)) > 500.0_fp)) THEN
+        !** use default snow EM
+        CALL ATMS_SNOW_ByTypes(Frequency,Snow_Type,em_vector)
+     ELSE
+        ! the above regression-based snow-typing algs are superseded by the diagnosis-based snow-typing
+        CALL ATMS_SNOW_ByTBTs_D(Frequency,Tbs,Ts,Snow_Type,em_vector)  
+     END IF
+
 
    ! Get the emissivity angle dependence
      CALL NESDIS_LandEM(Satellite_Angle,frequency,0.0_fp,0.0_fp,Ts,Ts,0.0_fp_kind,9,13,2.0_fp,esh1,esv1)
@@ -426,7 +420,7 @@ CONTAINS
    !----------------------------------------------------------------------------------------------------------!
 
      IMPLICIT NONE
-
+     
      INTEGER,PARAMETER:: ncand = N_SNOW_TYPES,nch = N_FREQ_ATMS
      INTEGER:: i,snow_type
      REAL(fp)   :: em(ncand,nch)
@@ -434,8 +428,10 @@ CONTAINS
      REAL(fp)   :: frequency,freq(nch),emissivity,emis(nch)
      REAL(fp)   :: kratio, bconst
 
+     ! Silence gfortran complaints about maybe-used-uninit by init to HUGE()
+     emissivity = HUGE(emissivity)
    ! Sixteen candidate snow emissivity spectra
-     IF (snow_type == INVALID_SNOW_TYPE)snow_type = 4
+     IF (snow_type == INVALID_SNOW_TYPE) snow_type = 4
 
      em = TRANSPOSE(SNOW_EMISS_ATMS_LIB)
      freq = FREQUENCY_ATMS
@@ -512,7 +508,6 @@ CONTAINS
      IMPLICIT NONE
 
      INTEGER , PARAMETER  :: ntype = N_SNOW_TYPES, nch = N_FREQ_ATMS, nwch = 5
-     REAL(fp), PARAMETER  :: earthrad = 6374._fp, satheight = 833.4_fp
      INTEGER  :: freq_idx,snow_type
      REAL(fp) :: frequency
      REAL(fp) :: em(nch,ntype), em_vector(:)
@@ -521,7 +516,6 @@ CONTAINS
      REAL(fp) :: ediff(ntype), X(nwch),Y(nwch),emw(nwch)
      REAL(fp) :: XX,XY,del,dem,dem2,delta,deltb
      INTEGER  :: minlc(1)
-     REAL(fp) :: theta,deg2rad,sinthetas,costhetas
      INTEGER  :: windex(nwch)=(/1,2,3,11,12/)             ! window channel index of the library spectrum
      ! Coefficients of quadratic equations used to estimate the emissivity difference
      ! between Ch-31.4GHz and 88.2GHZ
@@ -533,25 +527,23 @@ CONTAINS
      ! Quadratic EQ terms (1.0,tb(4),tb(4)^2,tb(5),tb(5)^2,Ts)
      REAL(fp) :: coe3(6)
 
+     ! Silence gfortran complaints about maybe-used-uninit by init to HUGE()
+     dem = HUGE(dem)
    ! Sixteen candidate snow emissivity spectra
      em = SNOW_EMISS_ATMS_LIB
      freq = FREQUENCY_ATMS
 
-     deg2rad = pi/180.0_fp
-     sinthetas = sin(theta*deg2rad)* earthrad/(earthrad + satheight)
-     sinthetas = sinthetas*sinthetas
-     costhetas = 1.0_fp - sinthetas
-
-     minlc =minloc(ABS(freq-frequency)); freq_idx=minlc(1)
+     minlc =MINLOC(ABS(freq-frequency)); freq_idx=minlc(1)
 
    !*** IDENTIFY SNOW TYPE
      snow_type = 4 !default
-     ediff=abs(Tb(1)/em(1,:)-Tb(2)/em(2,:))+abs(Tb(2)/em(2,:)-Tb(4)/em(11,:))
-     minlc = minloc(ediff) ; snow_type=minlc(1)
+     ediff=ABS(Tb(1)/em(1,:)-Tb(2)/em(2,:))+ABS(Tb(2)/em(2,:)-Tb(4)/em(11,:))
+     minlc = MINLOC(ediff) ; snow_type=minlc(1)
 
    !*** adjustment from the library values
      emw=em(windex,snow_type)
-     X=1.0_fp/emw ; Y=LOG(Tb/(Ts*emw))
+     X=1.0_fp/emw
+     Y((/1,2,4,5/)) = log(Tb((/1,2,4,5/))/(Ts*emw((/1,2,4,5/))))
      IF(frequency > 100.0_fp) THEN
        XX=DOT_PRODUCT(X((/1,2,4,5/)),X((/1,2,4,5/)))
        XY=DOT_PRODUCT(X((/1,2,4,5/)),Y((/1,2,4,5/)))
@@ -879,7 +871,7 @@ CONTAINS
      INTEGER,PARAMETER:: nch = N_FREQ_ATMS,nwch = 3,ncoe = 4
      REAL(fp)    :: tbb(:)
      REAL(fp)    :: em_vector(:),emissivity,frequency,ed0(nwch),discriminator(5)
-     INTEGER :: snow_type,i,k,ich,nvalid_ch
+     INTEGER :: snow_type,i,ich,nvalid_ch
      REAL(fp)  :: coe(50)
      SAVE coe
 
@@ -892,7 +884,6 @@ CONTAINS
    ! Fitting Coefficients at 150 GHz: Using Tb4, Tb5
      coe(21:25) = (/-3.395416e-001_fp,-4.632656e-003_fp,1.270735e-005_fp, &
           1.413038e-002_fp,-3.133239e-005_fp/)
-!    SAVE coe
 
    ! Calculate emissivity discriminators at five ATMS window channels
      DO ich = 1, nwch
@@ -991,6 +982,8 @@ CONTAINS
      LOGICAL:: pick_status,tindex(nind)
      SAVE      threshold,DI_coe,LI_coe, HI_coe,nmodel
 
+     ! Silence gfortran complaints about maybe-used-uninit by init to HUGE()
+     npass = HUGE(npass)
      nmodel = (/5,10,13,16,18,24,30,31,32,33,34,35,36,37,38/)
 
    ! Fitting coefficients for emissivity index at 31.4 GHz
@@ -1464,7 +1457,7 @@ CONTAINS
      COMPLEX(fp)  eair
      freq_3w = (/31.4_fp,89.0_fp,150.0_fp/)
 
-     eair = cmplx(one,-zero,fp)
+     eair = CMPLX(one,-zero,fp)
 
      snow_type = -999
 
@@ -1532,6 +1525,8 @@ CONTAINS
      REAL(fp) :: kratio, bconst,emissivity
      INTEGER :: ich
 
+     ! Silence gfortran complaints about maybe-used-uninit by init to HUGE()
+     emissivity = HUGE(emissivity)
    ! Sixteen candidate snow emissivity spectra
 
      em = TRANSPOSE(SNOW_EMISS_ATMS_LIB)
@@ -1660,10 +1655,10 @@ CONTAINS
               ichmax = 2
            ENDIF
            DO ich = ichmin,ichmax
-              dem = dem + abs(discriminator(ich) - em(k,ich+4))
+              dem = dem + ABS(discriminator(ich) - em(k,ich+4))
            END DO
            DO ich = 4,5
-              dem = dem + abs(discriminator(ich) - em(k,ich+5))
+              dem = dem + ABS(discriminator(ich) - em(k,ich+5))
            END DO
            IF (dem < demmin0) THEN
               demmin0 = dem
@@ -1685,10 +1680,10 @@ CONTAINS
      DO ich = 5, 9
         IF (ich .LE. 7) THEN
            IF (discriminator(ich - 4) .NE. -999.9_fp) &
-              adjust_check = adjust_check + abs(emis(ich) - discriminator(ich - 4))
+              adjust_check = adjust_check + ABS(emis(ich) - discriminator(ich - 4))
         ELSE
            IF (discriminator(ich - 4) .NE. -999.9_fp)  &
-              adjust_check = adjust_check + abs(emis(ich+1) - discriminator(ich - 4))
+              adjust_check = adjust_check + ABS(emis(ich+1) - discriminator(ich - 4))
         ENDIF
      END DO
 
@@ -1797,7 +1792,7 @@ CONTAINS
      REAL(fp) :: theta,frequency,depth,ts,esv_3w(:),esh_3w(:)
      REAL(fp) :: discriminator(5),emmod(nw_3),dem(nw_3)
      REAL(fp) :: emissivity,em_vector(2)
-     REAL(Double) :: dem_coe(nw_3,0:ncoe-1),sinthetas,costhetas,deg2rad
+     REAL(DOUBLE) :: dem_coe(nw_3,0:ncoe-1),sinthetas,costhetas,deg2rad
 
      SAVE  dem_coe
 
@@ -1815,7 +1810,7 @@ CONTAINS
 
 
      deg2rad = 3.14159_fp*pi/180.0_fp
-     sinthetas = sin(theta*deg2rad)* earthrad/(earthrad + satheight)
+     sinthetas = SIN(theta*deg2rad)* earthrad/(earthrad + satheight)
      sinthetas = sinthetas*sinthetas
      costhetas = one - sinthetas
 
