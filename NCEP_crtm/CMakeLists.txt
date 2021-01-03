@@ -1,148 +1,187 @@
 esma_set_this ()
 
-# no idea why this is not a Fortran file?
-add_custom_command (
-  OUTPUT CRTM_Module.F90
-  COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/CRTM_Module.fpp CRTM_Module.F90
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
-
 set (SRCS
-  CRTM_Module.F90
-  Type_Kinds.f90
-  File_Utility.f90
-  Message_Handler.f90
-  Date_Utility.f90
-  DateTime_Utility.f90
-  Timing_Utility.f90
-  Compare_Float_Numbers.f90
-  Endian_Utility.f90
-  Binary_File_Utility.f90
-  Sort_Utility.f90
-  Search_Utility.f90
-  String_Utility.f90
-  Fundamental_Constants.f90
-  Hyperbolic_Step.f90
-  Spectral_Units_Conversion.f90
-  UnitTest_Define.f90
-  SensorInfo_Parameters.f90
-  Subset_Define.f90
-  SpcCoeff_Define.f90 ACCoeff_Define.f90 NLTECoeff_Define.f90
-  SpcCoeff_Binary_IO.f90 ACCoeff_Binary_IO.f90 NLTECoeff_Binary_IO.f90
-  CloudCoeff_Define.f90 CloudCoeff_Binary_IO.f90
-  AerosolCoeff_Define.f90 AerosolCoeff_Binary_IO.f90
-  CRTM_Options_Define.f90
-  CRTM_AOD_Module.f90
-  IRwaterCoeff_Define.f90
-  SEcategory_Define.f90
-  LSEatlas_Define.f90
-  MWwaterCoeff_Define.f90
-    FitCoeff_Define.f90
-    MWwaterLUT_Define.f90
-  NESDIS_AMSRE_SICEEM_Module.f90
-  NESDIS_AMSRE_SNOWEM_Module.f90
-  NESDIS_AMSU_SICEEM_Module.f90
-  NESDIS_AMSU_SnowEM_Module.f90
-  NESDIS_MHS_SICEEM_Module.f90
-  NESDIS_MHS_SnowEM_Module.f90
-  NESDIS_LandEM_Module.f90
-  NESDIS_SEAICE_PHYEM_MODULE.f90
-  NESDIS_SnowEM_Parameters.f90
-  NESDIS_SSMI_Module.f90
-  NESDIS_SSMI_SIceEM_Module.f90
-  NESDIS_SSMI_SnowEM_Module.f90
-  NESDIS_SSMIS_SeaIceEM_Module.f90
-  NESDIS_SSMIS_SnowEM_Module.f90
-  NESDIS_SnowEM_ATMS_Parameters.f90
-  NESDIS_ATMS_SnowEM_Module.f90
-  NESDIS_ATMS_SeaICE_LIB.f90
-  NESDIS_ATMS_SeaICE_Module.f90
-  CRTM_Utility.f90
-  CRTM_Interpolation.f90
-  CRTM_SpcCoeff.f90
-  CRTM_TauCoeff.f90 TauCoeff_Define.f90
-  CRTM_AerosolCoeff.f90
-  CRTM_CloudCoeff.f90
-  CRTM_IRlandCoeff.f90 CRTM_IRwaterCoeff.f90 CRTM_IRsnowCoeff.f90 CRTM_IRiceCoeff.f90
-  CRTM_VISlandCoeff.f90 CRTM_VISwaterCoeff.f90 CRTM_VISsnowCoeff.f90 CRTM_VISiceCoeff.f90
-  CRTM_MWwaterCoeff.f90
-  CRTM_Atmosphere_Define.f90 CRTM_Cloud_Define.f90 CRTM_Aerosol_Define.f90
-  CRTM_Surface_Define.f90 CRTM_SensorData_Define.f90
-  CRTM_SensorInfo.f90
-  CRTM_ChannelInfo_Define.f90
-  CRTM_Geometry_Define.f90
-  CRTM_GeometryInfo_Define.f90 CRTM_GeometryInfo.f90
-  CRTM_Atmosphere.f90 iAtm_Define.f90
-  CRTM_CloudCover_Define.f90
-  CRTM_Model_Profiles.f90
-  CRTM_AerosolScatter.f90 ASvar_Define.f90
-  CRTM_CloudScatter.f90 CSvar_Define.f90
-  CRTM_MoleculeScatter.f90
-  CRTM_SfcOptics_Define.f90
-  CRTM_SfcOptics.f90
-  CRTM_IR_Land_SfcOptics.f90 CRTM_IR_Water_SfcOptics.f90 CRTM_IR_Snow_SfcOptics.f90 CRTM_IR_Ice_SfcOptics.f90
-  CRTM_MW_Land_SfcOptics.f90 CRTM_MW_Water_SfcOptics.f90 CRTM_MW_Snow_SfcOptics.f90 CRTM_MW_Ice_SfcOptics.f90
-  CRTM_VIS_Land_SfcOptics.f90  CRTM_VIS_Water_SfcOptics.f90 CRTM_VIS_Snow_SfcOptics.f90 CRTM_VIS_Ice_SfcOptics.f90
-  CRTM_SEcategory.f90
-  CRTM_LowFrequency_MWSSEM.f90
-  CRTM_Fastem1.f90
-  CRTM_FastemX.f90
-    Reflection_Correction_Module.f90
-    Azimuth_Emissivity_Module.f90 Azimuth_Emissivity_F6_Module.f90
-    Small_Scale_Correction_Module.f90 Large_Scale_Correction_Module.f90
-    Foam_Utility_Module.f90 Slope_Variance.f90
-    Guillou.f90 Ellison.f90 Liu.f90
-    Fresnel.f90
-  CRTM_IRSSEM.f90
-  CRTM_AtmOptics.f90 CRTM_AtmOptics_Define.f90 AOvar_Define.f90
-  CRTM_Planck_Functions.f90
-  RTV_Define.f90
-  SOI_Module.f90
-  ADA_Module.f90
-  Emission_Module.f90
-  CRTM_RTSolution_Define.f90
-  Common_RTSolution.f90
-  CRTM_RTSolution.f90
-  CRTM_AntennaCorrection.f90
-  CRTM_AncillaryInput_Define.f90
-    SSU_Input_Define.f90
-    Zeeman_Input_Define.f90
-  CRTM_Parameters.f90
-  CRTM_LifeCycle.f90
-  CRTM_Forward_Module.f90
-  CRTM_Tangent_Linear_Module.f90
-  CRTM_Adjoint_Module.f90
-  CRTM_K_Matrix_Module.f90
-  CRTM_AtmAbsorption.f90
-  CRTM_Predictor.f90
-  CRTM_Predictor_Define.f90
-  ODAS_AtmAbsorption.f90
-  ODAS_Predictor.f90
-  ODAS_Predictor_Define.f90
-  ODAS_Binary_IO.f90
-  ODAS_Define.f90
-  ODAS_TauCoeff.f90
-  ODPS_AtmAbsorption.f90
-  ODPS_Predictor.f90
-  ODPS_Predictor_Define.f90
-    PAFV_Define.f90
-  ODPS_Binary_IO.f90
-  ODPS_Define.f90
-  ODPS_TauCoeff.f90
-  CRTM_GeometryInfo.f90
-  ODSSU_AtmAbsorption.f90
-  ODSSU_Define.f90
-  ODSSU_Binary_IO.f90
-  ODSSU_TauCoeff.f90
-  Profile_Utility_Parameters.f90
-  ODPS_CoordinateMapping.f90
-  ODZeeman_TauCoeff.f90
-  ODZeeman_AtmAbsorption.f90
-  ODZeeman_Predictor.f90
-  Zeeman_Utility.f90
-  EDD_Module.f90
-  P2S_Module.f90
-  CRTM_NLTECorrection.f90 NLTE_Parameters.f90 NLTE_Predictor_Define.f90 NLTE_Predictor_IO.f90
+  ./JCSDA_crtm/src/CRTM_Module.F90
+  ./JCSDA_crtm/src/Ancillary/CRTM_AncillaryInput_Define.f90
+  ./JCSDA_crtm/src/AntennaCorrection/CRTM_AntennaCorrection.f90
+  ./JCSDA_crtm/src/AtmAbsorption/CRTM_AtmAbsorption.f90
+  ./JCSDA_crtm/src/AtmAbsorption/CRTM_Predictor_Define.f90
+  ./JCSDA_crtm/src/AtmAbsorption/CRTM_Predictor.f90
+  ./JCSDA_crtm/src/AtmAbsorption/ODAS/ODAS_AtmAbsorption.f90
+  ./JCSDA_crtm/src/AtmAbsorption/ODAS/ODAS_Predictor_Define.f90
+  ./JCSDA_crtm/src/AtmAbsorption/ODAS/ODAS_Predictor.f90
+  ./JCSDA_crtm/src/AtmAbsorption/ODPS/ODPS_AtmAbsorption.f90
+  ./JCSDA_crtm/src/AtmAbsorption/ODPS/ODPS_CoordinateMapping.f90
+  ./JCSDA_crtm/src/AtmAbsorption/ODPS/ODPS_Predictor_Define.f90
+  ./JCSDA_crtm/src/AtmAbsorption/ODPS/ODPS_Predictor.f90
+  ./JCSDA_crtm/src/AtmAbsorption/ODPS/PAFV_Define.f90
+  ./JCSDA_crtm/src/AtmAbsorption/ODSSU/ODSSU_AtmAbsorption.f90
+  ./JCSDA_crtm/src/AtmAbsorption/ODZeeman/ODZeeman_AtmAbsorption.f90
+  ./JCSDA_crtm/src/AtmAbsorption/ODZeeman/ODZeeman_Predictor.f90
+  ./JCSDA_crtm/src/AtmOptics/AOvar_Define.f90
+  ./JCSDA_crtm/src/AtmOptics/CRTM_AtmOptics_Define.f90
+  ./JCSDA_crtm/src/AtmOptics/CRTM_AtmOptics.f90
+  ./JCSDA_crtm/src/Atmosphere/Aerosol/CRTM_Aerosol_Define.f90
+  ./JCSDA_crtm/src/Atmosphere/Cloud/CRTM_CloudCover_Define.f90
+  ./JCSDA_crtm/src/Atmosphere/Cloud/CRTM_Cloud_Define.f90
+  ./JCSDA_crtm/src/Atmosphere/CRTM_Atmosphere_Define.f90
+  ./JCSDA_crtm/src/Atmosphere/CRTM_Atmosphere.f90
+  ./JCSDA_crtm/src/Atmosphere/CRTM_Model_Profiles.f90
+  ./JCSDA_crtm/src/Atmosphere/iAtm_Define.f90
+  ./JCSDA_crtm/src/AtmScatter/AerosolScatter/ASvar_Define.f90
+  ./JCSDA_crtm/src/AtmScatter/CloudScatter/CSvar_Define.f90
+  ./JCSDA_crtm/src/AtmScatter/CRTM_AerosolScatter.f90
+  ./JCSDA_crtm/src/AtmScatter/CRTM_AOD_Module.f90
+  ./JCSDA_crtm/src/AtmScatter/CRTM_CloudScatter.f90
+  ./JCSDA_crtm/src/AtmScatter/CRTM_MoleculeScatter.f90
+  ./JCSDA_crtm/src/ChannelInfo/CRTM_ChannelInfo_Define.f90
+  ./JCSDA_crtm/src/Coefficients/ACCoeff/ACCoeff_Binary_IO.f90
+  ./JCSDA_crtm/src/Coefficients/ACCoeff/ACCoeff_Define.f90
+  ./JCSDA_crtm/src/Coefficients/AerosolCoeff/AerosolCoeff_Binary_IO.f90
+  ./JCSDA_crtm/src/Coefficients/AerosolCoeff/AerosolCoeff_Define.f90
+  ./JCSDA_crtm/src/Coefficients/AerosolCoeff/AerosolCoeff_netCDF_IO.f90
+  ./JCSDA_crtm/src/Coefficients/CloudCoeff/CloudCoeff_Binary_IO.f90
+  ./JCSDA_crtm/src/Coefficients/CloudCoeff/CloudCoeff_Define.f90
+  ./JCSDA_crtm/src/Coefficients/CloudCoeff/CloudCoeff_netCDF_IO.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_AerosolCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_CloudCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_IRiceCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_IRlandCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_IRsnowCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_IRwaterCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_MWwaterCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_SpcCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_TauCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_VISiceCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_VISlandCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_VISsnowCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/CRTM_VISwaterCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/EmisCoeff/IR_Land/LSEatlas/LSEatlas_Define.f90
+  ./JCSDA_crtm/src/Coefficients/EmisCoeff/IR_Water/IRwaterCoeff_Define.f90
+  ./JCSDA_crtm/src/Coefficients/EmisCoeff/MW_Water/MWwaterCoeff_Define.f90
+  ./JCSDA_crtm/src/Coefficients/EmisCoeff/MW_Water/MWwaterLUT/MWwaterLUT_Define.f90
+  ./JCSDA_crtm/src/Coefficients/EmisCoeff/SEcategory/SEcategory_Define.f90
+  ./JCSDA_crtm/src/Coefficients/FitCoeff/FitCoeff_Define.f90
+  ./JCSDA_crtm/src/Coefficients/FitCoeff/FitCoeff_Destroy.inc
+  ./JCSDA_crtm/src/Coefficients/FitCoeff/FitCoeff_Equal.inc
+  ./JCSDA_crtm/src/Coefficients/FitCoeff/FitCoeff_Info.inc
+  ./JCSDA_crtm/src/Coefficients/FitCoeff/FitCoeff_ReadFile.inc
+  ./JCSDA_crtm/src/Coefficients/FitCoeff/FitCoeff_SetValue.inc
+  ./JCSDA_crtm/src/Coefficients/FitCoeff/FitCoeff_WriteFile.inc
+  ./JCSDA_crtm/src/Coefficients/NLTECoeff/NLTECoeff_Binary_IO.f90
+  ./JCSDA_crtm/src/Coefficients/NLTECoeff/NLTECoeff_Define.f90
+  ./JCSDA_crtm/src/Coefficients/SpcCoeff/SpcCoeff_Binary_IO.f90
+  ./JCSDA_crtm/src/Coefficients/SpcCoeff/SpcCoeff_Define.f90
+  ./JCSDA_crtm/src/Coefficients/TauCoeff/ODAS/ODAS_Binary_IO.f90
+  ./JCSDA_crtm/src/Coefficients/TauCoeff/ODAS/ODAS_Define.f90
+  ./JCSDA_crtm/src/Coefficients/TauCoeff/ODAS/ODAS_TauCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/TauCoeff/ODPS/ODPS_Binary_IO.f90
+  ./JCSDA_crtm/src/Coefficients/TauCoeff/ODPS/ODPS_Define.f90
+  ./JCSDA_crtm/src/Coefficients/TauCoeff/ODPS/ODPS_TauCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/TauCoeff/ODSSU/ODSSU_Binary_IO.f90
+  ./JCSDA_crtm/src/Coefficients/TauCoeff/ODSSU/ODSSU_Define.f90
+  ./JCSDA_crtm/src/Coefficients/TauCoeff/ODSSU/ODSSU_TauCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/TauCoeff/ODZeeman/ODZeeman_TauCoeff.f90
+  ./JCSDA_crtm/src/Coefficients/TauCoeff/TauCoeff_Define.f90
+  ./JCSDA_crtm/src/CRTM_Adjoint_Module.f90
+  ./JCSDA_crtm/src/CRTM_Forward_Module.f90
+  ./JCSDA_crtm/src/CRTM_K_Matrix_Module.f90
+  ./JCSDA_crtm/src/CRTM_LifeCycle.f90
+  ./JCSDA_crtm/src/CRTM_Module.F90
+  ./JCSDA_crtm/src/CRTM_Parameters.f90
+  ./JCSDA_crtm/src/CRTM_Tangent_Linear_Module.f90
+  ./JCSDA_crtm/src/CRTM_Utility/CRTM_Utility.f90
+  ./JCSDA_crtm/src/CRTM_Version.inc
+  ./JCSDA_crtm/src/GeometryInfo/CRTM_Geometry_Define.f90
+  ./JCSDA_crtm/src/GeometryInfo/CRTM_GeometryInfo_Define.f90
+  ./JCSDA_crtm/src/GeometryInfo/CRTM_GeometryInfo.f90
+  ./JCSDA_crtm/src/InstrumentInfo/Instruments/Subset_Define.f90
+  ./JCSDA_crtm/src/InstrumentInfo/SensorInfo/SensorInfo_Parameters.f90
+  ./JCSDA_crtm/src/Interpolation/CRTM_Interpolation.f90
+  ./JCSDA_crtm/src/NLTE/NLTE_Correction/CRTM_NLTECorrection.f90
+  ./JCSDA_crtm/src/NLTE/NLTE_Parameters.f90
+  ./JCSDA_crtm/src/NLTE/NLTE_Predictor/NLTE_Predictor_Define.f90
+  ./JCSDA_crtm/src/NLTE/NLTE_Predictor/NLTE_Predictor_IO.f90
+  ./JCSDA_crtm/src/Options/CRTM_Options_Define.f90
+  ./JCSDA_crtm/src/Options/SSU_Input/SSU_Input_Define.f90
+  ./JCSDA_crtm/src/Options/Zeeman_Input/Zeeman_Input_Define.f90
+  ./JCSDA_crtm/src/RTSolution/ADA/ADA_Module.f90
+  ./JCSDA_crtm/src/RTSolution/Common_RTSolution.f90
+  ./JCSDA_crtm/src/RTSolution/CRTM_RTSolution_Define.f90
+  ./JCSDA_crtm/src/RTSolution/CRTM_RTSolution.f90
+  ./JCSDA_crtm/src/RTSolution/Emission/Emission_Module.f90
+  ./JCSDA_crtm/src/RTSolution/RTV_Define.f90
+  ./JCSDA_crtm/src/RTSolution/SOI/SOI_Module.f90
+  ./JCSDA_crtm/src/SensorInfo/CRTM_SensorInfo.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_IR_Ice_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_IR_Land_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_IR_Snow_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_IR_Water_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_MW_Ice_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_MW_Land_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_MW_Snow_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_MW_Water_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_SfcOptics_Define.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_VIS_Ice_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_VIS_Land_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_VIS_Snow_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/CRTM_VIS_Water_SfcOptics.f90
+  ./JCSDA_crtm/src/SfcOptics/IR_Water/IRSSEM/CRTM_IRSSEM.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/FASTEM_MWSSEM/Azimuth_Emissivity_F6_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/FASTEM_MWSSEM/Azimuth_Emissivity_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/FASTEM_MWSSEM/CRTM_Fastem1.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/FASTEM_MWSSEM/CRTM_FastemX.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/FASTEM_MWSSEM/Foam_Utility_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/FASTEM_MWSSEM/Large_Scale_Correction_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/FASTEM_MWSSEM/Reflection_Correction_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/FASTEM_MWSSEM/Slope_Variance.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/FASTEM_MWSSEM/Small_Scale_Correction_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/Fresnel/Fresnel.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/LowFrequency_MWSSEM/CRTM_LowFrequency_MWSSEM.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/Ocean_Permittivity/Ellison.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/Ocean_Permittivity/Guillou.f90
+  ./JCSDA_crtm/src/SfcOptics/MW_Water/Ocean_Permittivity/Liu.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_AMSRE_SICEEM_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_AMSRE_SNOWEM_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_AMSU_SICEEM_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_AMSU_SnowEM_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_ATMS_SeaICE_LIB.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_ATMS_SeaICE_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_ATMS_SnowEM_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_LandEM_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_MHS_SICEEM_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_MHS_SnowEM_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_SEAICE_PHYEM_MODULE.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_SnowEM_ATMS_Parameters.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_SnowEM_Parameters.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_SSMI_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_SSMI_SIceEM_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_SSMI_SnowEM_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_SSMIS_SeaIceEM_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/NESDIS_Emissivity/NESDIS_SSMIS_SnowEM_Module.f90
+  ./JCSDA_crtm/src/SfcOptics/SEcategory/CRTM_SEcategory.f90
+  ./JCSDA_crtm/src/Source_Functions/CRTM_Planck_Functions.f90
+  ./JCSDA_crtm/src/Surface/CRTM_Surface_Define.f90
+  ./JCSDA_crtm/src/Surface/SensorData/CRTM_SensorData_Define.f90
+  ./JCSDA_crtm/src/Test_Utility/UnitTest/UnitTest_Define.f90
+  ./JCSDA_crtm/src/Utility/Binary_File_Utility.f90
+  ./JCSDA_crtm/src/Utility/Compare_Float_Numbers.f90
+  ./JCSDA_crtm/src/Utility/DateTime_Utility/DateTime_Utility.f90
+  ./JCSDA_crtm/src/Utility/DateTime_Utility/Date_Utility.f90
+  ./JCSDA_crtm/src/Utility/Endian_Utility/Endian_Utility.f90
+  ./JCSDA_crtm/src/Utility/File_Utility.f90
+  ./JCSDA_crtm/src/Utility/Fundamental_Constants.f90
+  ./JCSDA_crtm/src/Utility/Hyperbolic_Step/Hyperbolic_Step.f90
+  ./JCSDA_crtm/src/Utility/Message_Handler.f90
+  ./JCSDA_crtm/src/Utility/Profile_Utility/Profile_Utility_Parameters.f90
+  ./JCSDA_crtm/src/Utility/Search_Utility/Search_Utility.f90
+  ./JCSDA_crtm/src/Utility/Sort_Utility/Sort_Utility.f90
+  ./JCSDA_crtm/src/Utility/Spectral_Utility/Spectral_Units_Conversion.f90
+  ./JCSDA_crtm/src/Utility/String_Utility.f90
+  ./JCSDA_crtm/src/Utility/Timing_Utility.f90
+  ./JCSDA_crtm/src/Utility/Type_Kinds.f90
+  ./JCSDA_crtm/src/Zeeman/Zeeman_Utility.f90
 )
 
 if (CMAKE_Fortran_COMPILER_ID MATCHES Intel)
@@ -155,3 +194,4 @@ esma_add_library (${this}
   )
 
 set_target_properties(${this} PROPERTIES POSITION_INDEPENDENT_CODE OFF)
+target_include_directories (${this} PUBLIC ${INC_NETCDF})
