@@ -272,19 +272,8 @@ CONTAINS
         WRITE( msg,'("Error reading SpcCoeff file #",i0,", ",a)') n, TRIM(spccoeff_file)
         CALL Display_Message( ROUTINE_NAME, TRIM(msg)//TRIM(pid_msg), err_stat ); RETURN
       END IF
-!MJK!!!!!!
-      if(TRIM(ADJUSTL(Sensor_ID(n))) .eq. 'gmi_gpm') then
-           SC(n)%Frequency(6)=36.50
-           SC(n)%Frequency(7)=36.50
-           SC(n)%Frequency(8)=89.0
-           SC(n)%Frequency(9)=89.0
-           SC(n)%Frequency(10)=166.0
-           SC(n)%Frequency(11)=166.0
-           SC(n)%Frequency(12)=186.31
-           SC(n)%Frequency(13)=190.31
-      endif 
     END DO
-!MJK!!!!!!
+
 
     ! Set the protected variable MAX_N_CHANNELS
     CALL CRTM_Set_Max_nChannels( SUM(SC%n_Channels) )

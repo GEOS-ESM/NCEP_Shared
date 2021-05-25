@@ -243,6 +243,8 @@ MODULE CRTM_Parameters
   !#----------------------------------------------------------------------------#
   INTEGER, PUBLIC, PARAMETER :: RT_ADA = 56
   INTEGER, PUBLIC, PARAMETER :: RT_SOI = 168
+  INTEGER, PUBLIC, PARAMETER :: RT_P2S = 280
+  INTEGER, PUBLIC, PARAMETER :: RT_EDD = 392
   
   INTEGER, PUBLIC, PARAMETER :: MAX_N_CLOUDS   = 4 ! Max. number of clouds/profile. Needed for CSV...
   INTEGER, PUBLIC, PARAMETER :: MAX_N_AEROSOLS = 20 ! Max. number of aerosols/profile. Needed for ASV

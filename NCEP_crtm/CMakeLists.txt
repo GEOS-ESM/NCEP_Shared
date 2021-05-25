@@ -55,6 +55,8 @@ set (SRCS
   NESDIS_SSMIS_SnowEM_Module.f90
   NESDIS_SnowEM_ATMS_Parameters.f90
   NESDIS_ATMS_SnowEM_Module.f90
+  NESDIS_ATMS_SeaICE_LIB.f90
+  NESDIS_ATMS_SeaICE_Module.f90
   CRTM_Utility.f90
   CRTM_Interpolation.f90
   CRTM_SpcCoeff.f90
@@ -71,6 +73,7 @@ set (SRCS
   CRTM_Geometry_Define.f90
   CRTM_GeometryInfo_Define.f90 CRTM_GeometryInfo.f90
   CRTM_Atmosphere.f90 iAtm_Define.f90
+  CRTM_CloudCover_Define.f90
   CRTM_Model_Profiles.f90
   CRTM_AerosolScatter.f90 ASvar_Define.f90
   CRTM_CloudScatter.f90 CSvar_Define.f90
@@ -126,6 +129,7 @@ set (SRCS
   ODPS_Binary_IO.f90
   ODPS_Define.f90
   ODPS_TauCoeff.f90
+  CRTM_GeometryInfo.f90
   ODSSU_AtmAbsorption.f90
   ODSSU_Define.f90
   ODSSU_Binary_IO.f90
@@ -136,6 +140,8 @@ set (SRCS
   ODZeeman_AtmAbsorption.f90
   ODZeeman_Predictor.f90
   Zeeman_Utility.f90
+  EDD_Module.f90
+  P2S_Module.f90
   CRTM_NLTECorrection.f90 NLTE_Parameters.f90 NLTE_Predictor_Define.f90 NLTE_Predictor_IO.f90
 )
 

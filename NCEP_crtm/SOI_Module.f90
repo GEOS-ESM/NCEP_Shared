@@ -103,6 +103,7 @@ CONTAINS
       REAL(fp) :: radiance_thresh
       REAL(fp), DIMENSION( MAX_N_ANGLES ) :: source
   
+
       ! Precompute layer R/T matrices and thermal sources
       DO k = 1, n_Layers
         ! Precompute simple layer properties
