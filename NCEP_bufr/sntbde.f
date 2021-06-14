@@ -71,10 +71,11 @@ C$$$
 	CHARACTER*(*)	LINE
 	CHARACTER*200	TAGS(10), CLINE
 	CHARACTER*128	BORT_STR1, BORT_STR2
-	CHARACTER*120	CMSEQ(*), CEELEM(MXMTBD,MXELEM)
-	CHARACTER*8	CMMNEM(*)
+	CHARACTER*120	CEELEM(MXMTBD,MXELEM)
 	CHARACTER*6	ADN30, ADSC, CLEMON
 	CHARACTER*4	CMDSC(*)
+	CHARACTER	CMSEQ(120,*)
+	CHARACTER	CMMNEM(8,*)
 
 	INTEGER		IMFXYN(*), NMELEM(*),
      .                  IEFXYN(MXMTBD,MXELEM)
@@ -94,9 +95,13 @@ C	Store the FXY number.  This is the sequence descriptor.
 C	Is there any other information within the first line of the
 C	table entry?  If so, it follows a "|" separator.
 
-	CMMNEM ( NMTBD ) = ' '
+        DO II = 1, 8
+	    CMMNEM ( II, NMTBD ) = ' '
+        ENDDO
 	CMDSC ( NMTBD ) = ' '
-	CMSEQ ( NMTBD ) = ' '
+        DO II = 1, 120
+	    CMSEQ ( II, NMTBD ) = ' '
+        ENDDO
 	IPT = INDEX ( LINE, '|' )
 	IF ( IPT .NE. 0 ) THEN
 
@@ -112,7 +117,9 @@ C		If there is a mnemonic, then make sure it's legal.
 		    BORT_STR2 = '                  HAS ILLEGAL MNEMONIC'
 		    GOTO 901
 		ENDIF
-		CMMNEM ( NMTBD ) = TAGS(1)(1:8)
+                DO II = 1, 8
+		    CMMNEM ( II, NMTBD ) = TAGS(1)(II:II)
+                ENDDO
 	    ENDIF
 	    IF ( NTAG .GT. 1 ) THEN
 C		The second additional field contains descriptor codes.
@@ -122,7 +129,9 @@ C		The second additional field contains descriptor codes.
 	    IF ( NTAG .GT. 2 ) THEN
 C		The third additional field contains the sequence name.
 		CALL JSTCHR ( TAGS(3), IRET )
-		CMSEQ ( NMTBD ) = TAGS(3)(1:120)
+                DO II = 1, 120
+		    CMSEQ ( II, NMTBD ) = TAGS(3)(II:II)
+                ENDDO
 	    ENDIF
 	ENDIF
 

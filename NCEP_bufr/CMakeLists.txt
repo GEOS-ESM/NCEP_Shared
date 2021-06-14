@@ -380,3 +380,7 @@ target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:MAXNC=600>)
 target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:MXNAF=3>)
 target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:UNDERSCORE>)
 
+if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+   target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:DYNAMIC_ALLOCATION>)
+endif ()
+
