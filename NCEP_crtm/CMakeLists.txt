@@ -147,16 +147,8 @@ set (SRCS
 
 if (CMAKE_Fortran_COMPILER_ID MATCHES Intel)
   if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set (CMAKE_Fortran_FLAGS_DEBUG "")
-    foreach (src ${SRCS})
-      if (${src} MATCHES ADA_Module.f90)
-        set_source_files_properties (${src} PROPERTIES COMPILE_FLAGS "-free ${FOPT1} ${LITTLE_ENDIAN} ${BYTERECLEN}")
-      else ()
-        set_source_files_properties (${src} PROPERTIES COMPILE_FLAGS "${GEOS_Fortran_FLAGS_DEBUG} -free ${LITTLE_ENDIAN} ${BYTERECLEN}")
-      endif ()
-    endforeach ()
-  else ()
-    set (CMAKE_Fortran_FLAGS_RELEASE "-free ${FOPT2} ${LITTLE_ENDIAN} ${BYTERECLEN}")
+    message(WARNING "Intel Compiler and our debugging flags have issues with ADA_Module.f90. So for now we turn off checking compiling ADA_Module.f90")
+    set_source_files_properties(ADA_Module.f90 PROPERTIES COMPILE_OPTIONS -nocheck)
   endif ()
 endif ()
 
