@@ -28,9 +28,6 @@ PROGRAM check_crtm
   ! Some non-CRTM-y Parameters
   ! --------------------------
   CHARACTER(*), PARAMETER :: PROGRAM_NAME   = 'check_crtm'
-  CHARACTER(*), PARAMETER :: PROGRAM_VERSION_ID = &
-    '$Id$'
-
 
 
   ! ============================================================================
@@ -55,8 +52,10 @@ PROGRAM check_crtm
   INTEGER, PARAMETER :: N_AEROSOLS  = 1
   
   ! Sensor information
-  INTEGER     , PARAMETER :: N_SENSORS = 2
-  CHARACTER(*), PARAMETER :: SENSOR_ID(N_SENSORS) = (/'cris399_npp','atms_npp   '/)
+  INTEGER     , PARAMETER :: N_SENSORS = 3
+  CHARACTER(*), PARAMETER :: SENSOR_ID(N_SENSORS) = (/'v.abi_g17  ', &
+                                                      'cris399_npp', &
+                                                      'atms_npp   '/)
 
   ! Some pretend geometry angles. The scan angle is based
   ! on the default Re (earth radius) and h (satellite height)
@@ -208,8 +207,11 @@ PROGRAM check_crtm
     END DO
 
     ! The true fractional cloud fraction cases
-    atm(3:4) = atm(1:2)
-    sfc(3:4) = sfc(1:2)
+    !JR Intel 18 doesn't like atm(3:4) = atm(1:2) so recode w/o array syntax:
+    atm(3) = atm(1)
+    atm(4) = atm(2)
+    sfc(3) = sfc(1)
+    sfc(4) = sfc(2)
     DO m = 3, 4
       DO nc = 1, atm(m)%n_Clouds
         WHERE(atm(m)%Cloud(nc)%Water_Content > ZERO) atm(m)%Cloud_Fraction = 0.1426_fp
@@ -265,6 +267,15 @@ PROGRAM check_crtm
       STOP
     END IF
     
+   write( *,*) 'check_crtm Forward: Results for rts:'
+   DO m = 1, N_PROFILES
+     WRITE( *,'(//7x,"Profile ",i0," output for ",a )') m, TRIM(Sensor_Id(n))
+     DO l = 1, n_Channels
+       WRITE( *, '(/5x,"Channel ",i0," results")') chinfo(n)%Sensor_Channel(l)
+       CALL CRTM_RTSolution_Inspect(rts(l,m))
+     END DO
+   END DO
+
     
     ! 8b. The K-matrix model
     ! ----------------------
@@ -290,11 +301,23 @@ PROGRAM check_crtm
    ! CRTM_RTSolution_Inspect in the file CRTM_RTSolution_Define.f90 to
    ! select the needed variables for outputs.  These variables are contained
    ! in the structure RTSolution.
+   write( *,*) 'check_crtm K_Matrix: Results for rts:'
    DO m = 1, N_PROFILES
      WRITE( *,'(//7x,"Profile ",i0," output for ",a )') m, TRIM(Sensor_Id(n))
      DO l = 1, n_Channels
        WRITE( *, '(/5x,"Channel ",i0," results")') chinfo(n)%Sensor_Channel(l)
        CALL CRTM_RTSolution_Inspect(rts(l,m))
+     END DO
+   END DO
+
+   write( *,*) 'check_crtm K_Matrix: Results for rts_K:'
+   DO m = 1, N_PROFILES
+     WRITE( *,'(//7x,"Profile ",i0," output for ",a )') m, TRIM(Sensor_Id(n))
+     DO l = 1, n_Channels
+       WRITE( *, '(/5x,"Channel ",i0," rts_K results")') chinfo(n)%Sensor_Channel(l)
+       CALL CRTM_RTSolution_Inspect( rts_K(l,m) )
+       CALL CRTM_Atmosphere_Inspect( atm_K(l,m) )
+       CALL CRTM_Surface_Inspect(    sfc_K(l,m) )
      END DO
    END DO
 

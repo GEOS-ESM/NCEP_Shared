@@ -38,9 +38,6 @@ MODULE ADA_Module
   ! -----------------
   ! Module parameters
   ! -----------------
-  ! Version Id for the module
-  CHARACTER(*),  PARAMETER :: MODULE_VERSION_ID = &
-  '$Id$'
   
 CONTAINS
 
@@ -126,6 +123,7 @@ CONTAINS
     !    CALL  multiple-stream algorithm for computing layer       !
     !    transmission, reflection, and source functions.           !
     !  ----------------------------------------------------------- !
+
     CALL CRTM_AMOM_layer( &
            RTV%n_Streams,            &
            RTV%n_Angles,k,w(k),      &

@@ -140,8 +140,6 @@ FSRC_FILES = \
   ODZeeman_AtmAbsorption.f90 \
   ODZeeman_Predictor.f90 \
   Zeeman_Utility.f90 \
-  EDD_Module.f90 \
-  P2S_Module.f90 \
   CRTM_NLTECorrection.f90 NLTE_Parameters.f90 NLTE_Predictor_Define.f90 NLTE_Predictor_IO.f90
 
 # The complete list of source files

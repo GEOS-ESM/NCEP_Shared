@@ -26,8 +26,7 @@ MODULE CRTM_Tangent_Linear_Module
                                         MAX_N_AZIMUTH_FOURIER, &
                                         MAX_SOURCE_ZENITH_ANGLE, &
                                         MAX_N_STREAMS, &
-                                        SCATTERING_ALBEDO_THRESHOLD, &
-                                        RT_ADA, RT_SOI
+                                        SCATTERING_ALBEDO_THRESHOLD
   USE CRTM_SpcCoeff,              ONLY: SC, &
                                         SpcCoeff_IsVisibleSensor, &
                                         SpcCoeff_IsMicrowaveSensor
@@ -72,13 +71,9 @@ MODULE CRTM_Tangent_Linear_Module
                                         CRTM_AtmOptics_Destroy   , &
                                         CRTM_AtmOptics_Zero
   USE CRTM_AerosolScatter,        ONLY: CRTM_Compute_AerosolScatter   , &
-                                        CRTM_Compute_AerosolPhaseFnc  , &
-                                        CRTM_Compute_AerosolScatter_TL, &
-                                        CRTM_Compute_AerosolPhaseFnc_TL
+                                        CRTM_Compute_AerosolScatter_TL
   USE CRTM_CloudScatter,          ONLY: CRTM_Compute_CloudScatter   , &
-                                        CRTM_Compute_CloudPhaseFnc  , &
-                                        CRTM_Compute_CloudScatter_TL, &
-                                        CRTM_Compute_CloudPhaseFnc_TL
+                                        CRTM_Compute_CloudScatter_TL
   USE CRTM_AtmOptics,             ONLY: CRTM_Include_Scattering, &
                                         CRTM_Compute_Transmittance     , &
                                         CRTM_Compute_Transmittance_TL  , &
@@ -150,15 +145,6 @@ MODULE CRTM_Tangent_Linear_Module
   PRIVATE
   ! Public procedures
   PUBLIC :: CRTM_Tangent_Linear
-  PUBLIC :: CRTM_Tangent_Linear_Version
-
-
-  ! -----------------
-  ! Module parameters
-  ! -----------------
-  ! Version Id for the module
-  CHARACTER(*), PARAMETER :: MODULE_VERSION_ID = &
-  '$Id$'
 
 
 CONTAINS
@@ -443,6 +429,8 @@ CONTAINS
       SfcOptics%Use_New_MWSSEM    = .NOT. Opt%Use_Old_MWSSEM
       SfcOptics_TL%Use_New_MWSSEM = .NOT. Opt%Use_Old_MWSSEM
 
+      ! Check whether to skip this profile
+      IF ( Opt%Skip_Profile ) CYCLE Profile_Loop
 
       ! Check the input data if required
       IF ( Opt%Check_Input ) THEN
@@ -740,6 +728,23 @@ CONTAINS
           CALL CRTM_RTSolution_Zero( RTSolution_Clear )
           CALL CRTM_RTSolution_Zero( RTSolution_Clear_TL )
 
+
+          ! Determine the number of streams (n_Full_Streams) in up+downward directions
+          IF ( Opt%Use_N_Streams ) THEN
+            n_Full_Streams = Opt%n_Streams
+            RTSolution(ln,m)%n_Full_Streams = n_Full_Streams + 2
+            RTSolution(ln,m)%Scattering_Flag = .TRUE.
+          ELSE
+            n_Full_Streams = CRTM_Compute_nStreams( Atm             , &  ! Input
+                                                    SensorIndex     , &  ! Input
+                                                    ChannelIndex    , &  ! Input
+                                                    RTSolution(ln,m)  )  ! Output
+          END IF
+          ! ...Transfer stream count to scattering structures
+          AtmOptics%n_Legendre_Terms    = n_Full_Streams
+          AtmOptics_TL%n_Legendre_Terms = n_Full_Streams
+
+
           ! Compute the gas absorption
           CALL CRTM_Compute_AtmAbsorption( SensorIndex   , &  ! Input
                                            ChannelIndex  , &  ! Input
@@ -754,99 +759,6 @@ CONTAINS
                                               AtmOptics_TL    , &  ! Output
                                               AAvar             )  ! Internal variable input
 
-
-          ! Compute the cloud particle absorption/scattering properties
-          IF( Atm%n_Clouds > 0 ) THEN
-            Status_FWD = CRTM_Compute_CloudScatter( Atm         , &  ! Input
-                                                    SensorIndex , &  ! Input
-                                                    ChannelIndex, &  ! Input
-                                                    AtmOptics   , &  ! Output
-                                                    CSvar         )  ! Internal variable output
-            Status_TL = CRTM_Compute_CloudScatter_TL( Atm         , &  ! FWD Input
-                                                      AtmOptics   , &  ! FWD Input
-                                                      Atm_TL      , &  ! TL  Input
-                                                      SensorIndex , &  ! Input
-                                                      ChannelIndex, &  ! Input
-                                                      AtmOptics_TL, &  ! TL  Output
-                                                      CSvar         )  ! Internal variable input
-
-            IF ( Status_FWD /= SUCCESS .OR. Status_TL /= SUCCESS) THEN
-              Error_Status = FAILURE
-              WRITE( Message,'("Error computing CloudScatter for ",a,&
-                     &", channel ",i0,", profile #",i0)' ) &
-                     TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
-              CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
-              RETURN
-            END IF
-          END IF
-
-          ! Compute the aerosol absorption/scattering properties
-          IF ( Atm%n_Aerosols > 0 ) THEN
-            Status_FWD = CRTM_Compute_AerosolScatter( Atm         , &  ! Input
-                                                      SensorIndex , &  ! Input
-                                                      ChannelIndex, &  ! Input
-                                                      AtmOptics   , &  ! In/Output
-                                                      ASvar         )  ! Internal variable output
-            Status_TL  = CRTM_Compute_AerosolScatter_TL( Atm         , &  ! FWD Input
-                                                         AtmOptics   , &  ! FWD Input
-                                                         Atm_TL      , &  ! TL  Input
-                                                         SensorIndex , &  ! Input
-                                                         ChannelIndex, &  ! Input
-                                                         AtmOptics_TL, &  ! TL  Output
-                                                         ASvar         )  ! Internal variable input
-            IF ( Status_FWD /= SUCCESS .OR. Status_TL /= SUCCESS) THEN
-              Error_Status = FAILURE
-              WRITE( Message,'("Error computing AerosolScatter for ",a,&
-                     &", channel ",i0,", profile #",i0)' ) &
-                     TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
-              CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
-              RETURN
-            END IF
-          END IF
-
-          ! Determine the number of streams (n_Full_Streams) in up+downward directions
-!          IF ( Opt%Use_N_Streams ) THEN
-!            n_Full_Streams = Opt%n_Streams
-!            RTSolution(ln,m)%n_Full_Streams = n_Full_Streams + 2
-!            RTSolution(ln,m)%Scattering_Flag = .TRUE.
-!          ELSE
-!            IF ( RTV%RT_Algorithm_Id .EQ. RT_ADA .OR. RTV%RT_Algorithm_Id .EQ. RT_SOI ) THEN
-!              n_Full_Streams = CRTM_Compute_nStreams( Atm             , &  ! Input
-!                                                      SensorIndex     , &  ! Input
-!                                                      ChannelIndex    , &  ! Input
-!                                                      RTSolution(ln,m)  )  ! Output
-!            ELSE
-!              ! Special case for P2S and EDD solvers
-!              n_Full_Streams = 2
-!              RTSolution(ln,m)%n_Full_Streams = n_Full_Streams + 2
-!              RTSolution(ln,m)%Scattering_Flag = .TRUE.
-!              AtmOptics%Delta_Adjust = .FALSE.
-!            END IF
-!          END IF
-          ! ...Transfer stream count to scattering structures
-!          AtmOptics%n_Legendre_Terms    = n_Full_Streams
-!          AtmOptics_TL%n_Legendre_Terms = n_Full_Streams
-
-!************ SI code
-          ! Determine the number of streams (n_Full_Streams) in up+downward directions
-          IF ( AtmOptics%Include_Scattering ) THEN
-            IF ( Opt%Use_N_Streams ) THEN
-              n_Full_Streams = Options(m)%n_Streams
-              RTSolution(ln,m)%n_Full_Streams = n_Full_Streams + 2
-              RTSolution(ln,m)%Scattering_Flag = .TRUE.
-            ELSE
-              n_Full_Streams = CRTM_Compute_nStreams( Atm             , &  ! Input
-                                                      AtmOptics       , &  ! Input
-                                                      GeometryInfo    , &  ! Input
-                                                      SensorIndex     , &  ! Input
-                                                      ChannelIndex    , &  ! Input
-                                                      RTSolution(ln,m)  )  ! Output
-            END IF
-          END IF
-          ! ...Transfer stream count to scattering structures
-          AtmOptics%n_Legendre_Terms    = n_Full_Streams
-          AtmOptics_TL%n_Legendre_Terms = n_Full_Streams
-!*****************
 
           ! Compute the molecular scattering properties
           ! ...Solar radiation
@@ -910,23 +822,23 @@ CONTAINS
           END IF
 
 
-          ! Compute the cloud particle scattering phase function
-          IF( Atm%n_Clouds > 0 .AND. RTSolution(ln,m)%Scattering_Flag ) THEN
-            Status_FWD = CRTM_Compute_CloudPhaseFnc( Atm         , &  ! Input
-                                                     SensorIndex , &  ! Input
-                                                     ChannelIndex, &  ! Input
-                                                     AtmOptics   , &  ! Output
-                                                     CSvar         )  ! Internal variable output
-            Status_TL = CRTM_Compute_CloudPhaseFnc_TL( Atm         , &  ! FWD Input
-                                                       AtmOptics   , &  ! FWD Input
-                                                       Atm_TL      , &  ! TL  Input
-                                                       SensorIndex , &  ! Input
-                                                       ChannelIndex, &  ! Input
-                                                       AtmOptics_TL, &  ! TL  Output
-                                                       CSvar         )  ! Internal variable input
+          ! Compute the cloud particle absorption/scattering properties
+          IF( Atm%n_Clouds > 0 ) THEN
+            Status_FWD = CRTM_Compute_CloudScatter( Atm         , &  ! Input
+                                                    SensorIndex , &  ! Input
+                                                    ChannelIndex, &  ! Input
+                                                    AtmOptics   , &  ! Output
+                                                    CSvar         )  ! Internal variable output
+            Status_TL = CRTM_Compute_CloudScatter_TL( Atm         , &  ! FWD Input
+                                                      AtmOptics   , &  ! FWD Input
+                                                      Atm_TL      , &  ! TL  Input
+                                                      SensorIndex , &  ! Input
+                                                      ChannelIndex, &  ! Input
+                                                      AtmOptics_TL, &  ! TL  Output
+                                                      CSvar         )  ! Internal variable input
             IF ( Status_FWD /= SUCCESS .OR. Status_TL /= SUCCESS) THEN
               Error_Status = FAILURE
-              WRITE( Message,'("Error computing CloudPhaseFnc for ",a,&
+              WRITE( Message,'("Error computing CloudScatter for ",a,&
                      &", channel ",i0,", profile #",i0)' ) &
                      TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
               CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
@@ -935,23 +847,23 @@ CONTAINS
           END IF
 
 
-          ! Compute the aerosol scattering phase function
-          IF ( Atm%n_Aerosols > 0 .AND. RTSolution(ln,m)%Scattering_Flag ) THEN
-            Status_FWD = CRTM_Compute_AerosolPhaseFnc( Atm         , &  ! Input
-                                                       SensorIndex , &  ! Input
-                                                       ChannelIndex, &  ! Input
-                                                       AtmOptics   , &  ! In/Output
-                                                       ASvar         )  ! Internal variable output
-            Status_TL  = CRTM_Compute_AerosolPhaseFnc_TL( Atm         , &  ! FWD Input
-                                                          AtmOptics   , &  ! FWD Input
-                                                          Atm_TL      , &  ! TL  Input
-                                                          SensorIndex , &  ! Input
-                                                          ChannelIndex, &  ! Input
-                                                          AtmOptics_TL, &  ! TL  Output
-                                                          ASvar         )  ! Internal variable input
+          ! Compute the aerosol absorption/scattering properties
+          IF ( Atm%n_Aerosols > 0 ) THEN
+            Status_FWD = CRTM_Compute_AerosolScatter( Atm         , &  ! Input
+                                                      SensorIndex , &  ! Input
+                                                      ChannelIndex, &  ! Input
+                                                      AtmOptics   , &  ! In/Output
+                                                      ASvar         )  ! Internal variable output
+            Status_TL  = CRTM_Compute_AerosolScatter_TL( Atm         , &  ! FWD Input
+                                                         AtmOptics   , &  ! FWD Input
+                                                         Atm_TL      , &  ! TL  Input
+                                                         SensorIndex , &  ! Input
+                                                         ChannelIndex, &  ! Input
+                                                         AtmOptics_TL, &  ! TL  Output
+                                                         ASvar         )  ! Internal variable input
             IF ( Status_FWD /= SUCCESS .OR. Status_TL /= SUCCESS) THEN
               Error_Status = FAILURE
-              WRITE( Message,'("Error computing AerosolPhaseFnc for ",a,&
+              WRITE( Message,'("Error computing AerosolScatter for ",a,&
                      &", channel ",i0,", profile #",i0)' ) &
                      TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
               CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
@@ -1043,7 +955,6 @@ CONTAINS
               CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
               RETURN
             END IF
-
             ! ...Tangent-linear model
             Error_Status = CRTM_Compute_RTSolution_TL( &
                              Atm                , &  ! FWD Input
@@ -1237,36 +1148,5 @@ CONTAINS
       END IF
 
     END SUBROUTINE Post_Process_RTSolution
-
   END FUNCTION CRTM_Tangent_Linear
-
-
-!--------------------------------------------------------------------------------
-!:sdoc+:
-!
-! NAME:
-!       CRTM_Tangent_Linear_Version
-!
-! PURPOSE:
-!       Subroutine to return the module version information.
-!
-! CALLING SEQUENCE:
-!       CALL CRTM_Tangent_Linear_Version( Id )
-!
-! OUTPUTS:
-!       Id:            Character string containing the version Id information
-!                      for the module.
-!                      UNITS:      N/A
-!                      TYPE:       CHARACTER(*)
-!                      DIMENSION:  Scalar
-!                      ATTRIBUTES: INTENT(OUT)
-!
-!:sdoc-:
-!--------------------------------------------------------------------------------
-
-  SUBROUTINE CRTM_Tangent_Linear_Version( Id )
-    CHARACTER(*), INTENT(OUT) :: Id
-    Id = MODULE_VERSION_ID
-  END SUBROUTINE CRTM_Tangent_Linear_Version
-
 END MODULE CRTM_Tangent_Linear_Module

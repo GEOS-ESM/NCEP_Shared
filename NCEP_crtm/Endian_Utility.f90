@@ -556,45 +556,6 @@ END MODULE Endian_Utility
 !                          -- MODIFICATION HISTORY --
 !-------------------------------------------------------------------------------
 !
-! $Id$
-!
-! $Date$
-!
-! $Revision$
-!
-! $State$
-!
-! $Name$
-!
-! $Log$
-! Revision 1.6.12.5.2.14  2018/04/25 22:10:47  jguo
-! Downloaded crtm source codes (.tar) from Tom Greenwald by Min-Jeong, which
-! is labeled as crtm_v2.3.0_r100045_source.
-!
-! Following files are missing from the collection.  They are then patched
-! with revisions from ncep-crtm-REL-2_3_0-r99117.
-!
-! .cvsignore
-! CRTM_Module.fpp
-! CRTM_Version.inc
-! FitCoeff_Destroy.inc
-! FitCoeff_Equal.inc
-! FitCoeff_Info.inc
-! FitCoeff_ReadFile.inc
-! FitCoeff_SetValue.inc
-! FitCoeff_WriteFile.inc
-! Makefile.in
-! README
-! make.dependencies
-! make.filelist
-! make.rules
-!
-! make.filelist is modified with two new files, EDD_Modules.f90 and
-! P2S_Module.f90.
-!
-! Revision 1.1  2018/04/25 21:32:13  jguo
-! co -kk -l Endian_Utility.f90  # to remove keyword values
-!
 ! Revision 2.3  2004/12/01 19:35:15  paulv
 ! - Documentation errors corrected.
 !

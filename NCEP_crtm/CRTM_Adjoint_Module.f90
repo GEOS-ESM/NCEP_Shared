@@ -26,8 +26,7 @@ MODULE CRTM_Adjoint_Module
                                         MAX_N_AZIMUTH_FOURIER  , &
                                         MAX_SOURCE_ZENITH_ANGLE, &
                                         MAX_N_STREAMS          , &
-                                        SCATTERING_ALBEDO_THRESHOLD, &
-                                        RT_ADA, RT_SOI
+                                        SCATTERING_ALBEDO_THRESHOLD
   USE CRTM_SpcCoeff,              ONLY: SC, &
                                         SpcCoeff_IsInfraredSensor , &
                                         SpcCoeff_IsMicrowaveSensor, &
@@ -77,13 +76,9 @@ MODULE CRTM_Adjoint_Module
                                         CRTM_AtmOptics_Destroy   , &
                                         CRTM_AtmOptics_Zero
   USE CRTM_AerosolScatter,        ONLY: CRTM_Compute_AerosolScatter   , &
-                                        CRTM_Compute_AerosolPhaseFnc  , &
-                                        CRTM_Compute_AerosolScatter_AD, &
-                                        CRTM_Compute_AerosolPhaseFnc_AD
+                                        CRTM_Compute_AerosolScatter_AD
   USE CRTM_CloudScatter,          ONLY: CRTM_Compute_CloudScatter   , &
-                                        CRTM_Compute_CloudPhaseFnc  , &
-                                        CRTM_Compute_CloudScatter_AD, &
-                                        CRTM_Compute_CloudPhaseFnc_AD
+                                        CRTM_Compute_CloudScatter_AD
   USE CRTM_AtmOptics,             ONLY: CRTM_Include_Scattering        , &
                                         CRTM_Compute_Transmittance     , &
                                         CRTM_Compute_Transmittance_AD  , &
@@ -156,16 +151,11 @@ MODULE CRTM_Adjoint_Module
   PRIVATE
   ! Public procedures
   PUBLIC :: CRTM_Adjoint
-  PUBLIC :: CRTM_Adjoint_Version
 
 
   ! -----------------
   ! Module parameters
   ! -----------------
-  ! Version Id for the module
-  CHARACTER(*), PARAMETER :: MODULE_VERSION_ID = &
-  '$Id$'
-
 
 CONTAINS
 
@@ -362,7 +352,8 @@ CONTAINS
     ! Cloud cover object
     TYPE(CRTM_CloudCover_type) :: CloudCover, CloudCover_AD
 
-
+    ! Silence gfortran complaints about maybe-used-uninit by init to HUGE()
+    r_cloudy = HUGE(r_cloudy)
     ! ------
     ! SET UP
     ! ------
@@ -470,6 +461,8 @@ CONTAINS
       ! ...Assign the option specific SfcOptics input
       SfcOptics%Use_New_MWSSEM = .NOT. Opt%Use_Old_MWSSEM
 
+      ! Check whether to skip this profile
+      IF ( Opt%Skip_Profile ) CYCLE Profile_Loop
 
       ! Check the input data if required
       IF ( Opt%Check_Input ) THEN
@@ -760,95 +753,33 @@ CONTAINS
           CALL CRTM_RTSolution_Zero( RTSolution_Clear )
           CALL CRTM_RTSolution_Zero( RTSolution_Clear_AD )
 
+
+          ! Determine the number of streams (n_Full_Streams) in up+downward directions
+          IF ( Opt%Use_N_Streams ) THEN
+            n_Full_Streams = Options(m)%n_Streams
+            RTSolution(ln,m)%n_Full_Streams = n_Full_Streams + 2
+            RTSolution(ln,m)%Scattering_Flag = .TRUE.
+          ELSE
+            n_Full_Streams = CRTM_Compute_nStreams( Atm             , &  ! Input
+                                                    SensorIndex     , &  ! Input
+                                                    ChannelIndex    , &  ! Input
+                                                    RTSolution(ln,m)  )  ! Output
+          END IF
+          ! ...Transfer stream count to scattering structures
+          AtmOptics%n_Legendre_Terms    = n_Full_Streams
+          AtmOptics_AD%n_Legendre_Terms = n_Full_Streams
+          ! ...Ensure clear-sky object dimensions are consistent
+          AtmOptics_Clear_AD%n_Legendre_Terms = AtmOptics_AD%n_Legendre_Terms
+
+
           ! Compute the gas absorption
           CALL CRTM_Compute_AtmAbsorption( SensorIndex   , &  ! Input
                                            ChannelIndex  , &  ! Input
                                            AncillaryInput, &  ! Input
                                            Predictor     , &  ! Input
                                            AtmOptics     , &  ! Output
-                                           AAvar           )  ! Internal variable output
+                                           AAVar           )  ! Internal variable output
 
-          ! Compute the cloud particle absorption/scattering properties
-          IF( Atm%n_Clouds > 0 ) THEN
-            Error_Status = CRTM_Compute_CloudScatter( Atm         , &  ! Input
-                                                      SensorIndex , &  ! Input
-                                                      ChannelIndex, &  ! Input
-                                                      AtmOptics   , &  ! Output
-                                                      CSvar         )  ! Internal variable output
-            IF ( Error_Status /= SUCCESS ) THEN
-              WRITE( Message,'("Error computing CloudScatter for ",a,&
-                     &", channel ",i0,", profile #",i0)' ) &
-                     TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
-              CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
-              RETURN
-            END IF
-          END IF
-
-
-          ! Compute the aerosol absorption/scattering properties
-          IF ( Atm%n_Aerosols > 0 ) THEN
-            Error_Status = CRTM_Compute_AerosolScatter( Atm         , &  ! Input
-                                                        SensorIndex , &  ! Input
-                                                        ChannelIndex, &  ! Input
-                                                        AtmOptics   , &  ! In/Output
-                                                        ASvar         )  ! Internal variable output
-            IF ( Error_Status /= SUCCESS ) THEN
-              WRITE( Message,'("Error computing AerosolScatter for ",a,&
-                     &", channel ",i0,", profile #",i0)' ) &
-                     TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
-              CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
-              RETURN
-            END IF
-          END IF
-
-
-          ! Determine the number of streams (n_Full_Streams) in up+downward directions
-!          IF ( Opt%Use_N_Streams ) THEN
-!            n_Full_Streams = Options(m)%n_Streams
-!            RTSolution(ln,m)%n_Full_Streams = n_Full_Streams + 2
-!            RTSolution(ln,m)%Scattering_Flag = .TRUE.
-!          ELSE
-!            IF ( RTV%RT_Algorithm_Id .EQ. RT_ADA .OR. RTV%RT_Algorithm_Id .EQ. RT_SOI ) THEN
-!              n_Full_Streams = CRTM_Compute_nStreams( Atm             , &  ! Input
-!                                                      SensorIndex     , &  ! Input
-!                                                      ChannelIndex    , &  ! Input
-!                                                      RTSolution(ln,m)  )  ! Output
-!            ELSE
-!              ! Special case for P2S and EDD solvers
-!              n_Full_Streams = 2
-!              RTSolution(ln,m)%n_Full_Streams = n_Full_Streams + 2
-!              RTSolution(ln,m)%Scattering_Flag = .TRUE.
-!              AtmOptics%Delta_Adjust = .FALSE.
-!            END IF
-!          END IF
-!          ! ...Transfer stream count to scattering structures
-!          AtmOptics%n_Legendre_Terms    = n_Full_Streams
-!          AtmOptics_AD%n_Legendre_Terms = n_Full_Streams
-          ! ...Ensure clear-sky object dimensions are consistent
-!          AtmOptics_Clear_AD%n_Legendre_Terms = AtmOptics_AD%n_Legendre_Terms
-
-!************** SI code
-          ! Determine the number of streams (n_Full_Streams) in up+downward directions
-          IF ( AtmOptics%Include_Scattering ) THEN
-            IF ( Opt%Use_N_Streams ) THEN
-              n_Full_Streams = Options(m)%n_Streams
-              RTSolution(ln,m)%n_Full_Streams = n_Full_Streams + 2
-              RTSolution(ln,m)%Scattering_Flag = .TRUE.
-            ELSE
-              n_Full_Streams = CRTM_Compute_nStreams( Atm             , &  ! Input
-                                                      AtmOptics       , &  ! Input
-                                                      GeometryInfo    , &  ! Input
-                                                      SensorIndex     , &  ! Input
-                                                      ChannelIndex    , &  ! Input
-                                                      RTSolution(ln,m)  )  ! Output
-            END IF
-          END IF
-          ! ...Transfer stream count to scattering structures
-          AtmOptics%n_Legendre_Terms    = n_Full_Streams
-          AtmOptics_AD%n_Legendre_Terms = n_Full_Streams
-!************************
-          ! ...Ensure clear-sky object dimensions are consistent
-          AtmOptics_Clear_AD%n_Legendre_Terms = AtmOptics_AD%n_Legendre_Terms
 
           ! Compute the molecular scattering properties
           ! ...Solar radiation
@@ -909,15 +840,15 @@ CONTAINS
           END IF
 
 
-          ! Compute the cloud particle scattering phase function
-          IF( Atm%n_Clouds > 0 .AND. RTSolution(ln,m)%Scattering_Flag ) THEN
-            Error_Status = CRTM_Compute_CloudPhaseFnc( Atm         , &  ! Input
-                                                       SensorIndex , &  ! Input
-                                                       ChannelIndex, &  ! Input
-                                                       AtmOptics   , &  ! Output
-                                                       CSvar         )  ! Internal variable output
+          ! Compute the cloud particle absorption/scattering properties
+          IF( Atm%n_Clouds > 0 ) THEN
+            Error_Status = CRTM_Compute_CloudScatter( Atm         , &  ! Input
+                                                      SensorIndex , &  ! Input
+                                                      ChannelIndex, &  ! Input
+                                                      AtmOptics   , &  ! Output
+                                                      CSvar         )  ! Internal variable output
             IF (Error_Status /= SUCCESS) THEN
-              WRITE( Message,'("Error computing CloudPhaseFnc for ",a,&
+              WRITE( Message,'("Error computing CloudScatter for ",a,&
                      &", channel ",i0,", profile #",i0)' ) &
                      TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
               CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
@@ -926,15 +857,15 @@ CONTAINS
           END IF
 
 
-          ! Compute the aerosol scattering phase function
-          IF ( Atm%n_Aerosols > 0 .AND. RTSolution(ln,m)%Scattering_Flag ) THEN
-            Error_Status = CRTM_Compute_AerosolPhaseFnc( Atm         , &  ! Input
-                                                         SensorIndex , &  ! Input
-                                                         ChannelIndex, &  ! Input
-                                                         AtmOptics   , &  ! In/Output
-                                                         ASvar         )  ! Internal variable output
+          ! Compute the aerosol absorption/scattering properties
+          IF ( Atm%n_Aerosols > 0 ) THEN
+            Error_Status = CRTM_Compute_AerosolScatter( Atm         , &  ! Input
+                                                        SensorIndex , &  ! Input
+                                                        ChannelIndex, &  ! Input
+                                                        AtmOptics   , &  ! In/Output
+                                                        ASvar         )  ! Internal variable output
             IF ( Error_Status /= SUCCESS ) THEN
-              WRITE( Message,'("Error computing AerosolPhaseFnc for ",a,&
+              WRITE( Message,'("Error computing AerosolScatter for ",a,&
                      &", channel ",i0,", profile #",i0)' ) &
                      TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
               CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
@@ -1331,17 +1262,17 @@ CONTAINS
           END IF
 
 
-          ! Compute the adjoint aerosol scattering phase function
-          IF ( Atm%n_Aerosols > 0 .AND. RTSolution(ln,m)%Scattering_Flag ) THEN
-            Error_Status = CRTM_Compute_AerosolPhaseFnc_AD( Atm         , &  ! FWD Input
-                                                            AtmOptics   , &  ! FWD Input
-                                                            AtmOptics_AD, &  ! AD  Input
-                                                            SensorIndex , &  ! Input
-                                                            ChannelIndex, &  ! Input
-                                                            Atm_AD      , &  ! AD  Output
-                                                            ASvar         )  ! Internal variable input
+          ! Compute the adjoint aerosol absorption/scattering properties
+          IF ( Atm%n_Aerosols > 0 ) THEN
+            Error_Status = CRTM_Compute_AerosolScatter_AD( Atm         , &  ! FWD Input
+                                                           AtmOptics   , &  ! FWD Input
+                                                           AtmOptics_AD, &  ! AD  Input
+                                                           SensorIndex , &  ! Input
+                                                           ChannelIndex, &  ! Input
+                                                           Atm_AD      , &  ! AD  Output
+                                                           ASvar         )  ! Internal variable input
             IF ( Error_Status /= SUCCESS ) THEN
-              WRITE( Message,'("Error computing AerosolPhaseFnc_AD for ",a,&
+              WRITE( Message,'("Error computing AerosolScatter_AD for ",a,&
                      &", channel ",i0,", profile #",i0)' ) &
                      TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
               CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
@@ -1350,17 +1281,17 @@ CONTAINS
           END IF
 
 
-          ! Compute the adjoint cloud particle scattering phase function
-          IF ( Atm%n_Clouds > 0 .AND. RTSolution(ln,m)%Scattering_Flag ) THEN
-            Error_Status = CRTM_Compute_CloudPhaseFnc_AD( Atm         , &  ! FWD Input
-                                                          AtmOptics   , &  ! FWD Input
-                                                          AtmOptics_AD, &  ! AD  Input
-                                                          SensorIndex , &  ! Input
-                                                          ChannelIndex, &  ! Input
-                                                          Atm_AD      , &  ! AD  Output
-                                                          CSvar         )  ! Internal variable input
+          ! Compute the adjoint cloud absorption/scattering properties
+          IF ( Atm%n_Clouds > 0 ) THEN
+            Error_Status = CRTM_Compute_CloudScatter_AD( Atm         , &  ! FWD Input
+                                                         AtmOptics   , &  ! FWD Input
+                                                         AtmOptics_AD, &  ! AD  Input
+                                                         SensorIndex , &  ! Input
+                                                         ChannelIndex, &  ! Input
+                                                         Atm_AD      , &  ! AD  Output
+                                                         CSvar         )  ! Internal variable input
             IF ( Error_Status /= SUCCESS ) THEN
-              WRITE( Message,'("Error computing CloudPhaseFnc_AD for ",a,&
+              WRITE( Message,'("Error computing CloudScatter_AD for ",a,&
                      &", channel ",i0,", profile #",i0)' ) &
                      TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
               CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
@@ -1401,43 +1332,6 @@ CONTAINS
           END IF
 
 
-          ! Compute the adjoint aerosol absorption/scattering properties
-          IF ( Atm%n_Aerosols > 0 ) THEN
-            Error_Status = CRTM_Compute_AerosolScatter_AD( Atm         , &  ! FWD Input
-                                                           AtmOptics   , &  ! FWD Input
-                                                           AtmOptics_AD, &  ! AD  Input
-                                                           SensorIndex , &  ! Input
-                                                           ChannelIndex, &  ! Input
-                                                           Atm_AD      , &  ! AD  Output
-                                                           ASvar         )  ! Internal variable input
-            IF ( Error_Status /= SUCCESS ) THEN
-              WRITE( Message,'("Error computing AerosolScatter_AD for ",a,&
-                     &", channel ",i0,", profile #",i0)' ) &
-                     TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
-              CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
-              RETURN
-            END IF
-          END IF
-
-
-          ! Compute the adjoint cloud particle absorption/scattering properties
-          IF ( Atm%n_Clouds > 0 ) THEN
-            Error_Status = CRTM_Compute_CloudScatter_AD( Atm         , &  ! FWD Input
-                                                         AtmOptics   , &  ! FWD Input
-                                                         AtmOptics_AD, &  ! AD  Input
-                                                         SensorIndex , &  ! Input
-                                                         ChannelIndex, &  ! Input
-                                                         Atm_AD      , &  ! AD  Output
-                                                         CSvar         )  ! Internal variable input
-            IF ( Error_Status /= SUCCESS ) THEN
-              WRITE( Message,'("Error computing CloudScatter_AD for ",a,&
-                     &", channel ",i0,", profile #",i0)' ) &
-                     TRIM(ChannelInfo(n)%Sensor_ID), ChannelInfo(n)%Sensor_Channel(l), m
-              CALL Display_Message( ROUTINE_NAME, Message, Error_Status )
-              RETURN
-            END IF
-          END IF
-
           ! Compute the adjoint gaseous absorption
           CALL CRTM_Compute_AtmAbsorption_AD( SensorIndex     , &  ! Input
                                               ChannelIndex    , &  ! Input
@@ -1455,6 +1349,7 @@ CONTAINS
                  NLTE_Predictor_AD, &  ! Input
                  Atm_AD             )  ! Output
         END IF
+
 
         ! Adjoint of the predictor calculations
         CALL CRTM_Compute_Predictors_AD( SensorIndex   , &  ! Input
@@ -1611,36 +1506,5 @@ CONTAINS
       END IF
 
     END SUBROUTINE Pre_Process_RTSolution_AD
-
   END FUNCTION CRTM_Adjoint
-
-
-!--------------------------------------------------------------------------------
-!:sdoc+:
-!
-! NAME:
-!       CRTM_Adjoint_Version
-!
-! PURPOSE:
-!       Subroutine to return the module version information.
-!
-! CALLING SEQUENCE:
-!       CALL CRTM_Adjoint_Version( Id )
-!
-! OUTPUTS:
-!       Id:            Character string containing the version Id information
-!                      for the module.
-!                      UNITS:      N/A
-!                      TYPE:       CHARACTER(*)
-!                      DIMENSION:  Scalar
-!                      ATTRIBUTES: INTENT(OUT)
-!
-!:sdoc-:
-!--------------------------------------------------------------------------------
-
-  SUBROUTINE CRTM_Adjoint_Version( Id )
-    CHARACTER(*), INTENT(OUT) :: Id
-    Id = MODULE_VERSION_ID
-  END SUBROUTINE CRTM_Adjoint_Version
-
 END MODULE CRTM_Adjoint_Module
