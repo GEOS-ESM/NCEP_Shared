@@ -375,7 +375,11 @@ if (INTEGER_KIND STREQUAL "i8")
 endif()
 
 
-target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:STATIC_ALLOCATION>)
+if (CMAKE_C_COMPILER_ID MATCHES Intel)
+    target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:STATIC_ALLOCATION>)
+elseif (CMAKE_C_COMPILER_ID MATCHES "GNU")
+    target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:DYNAMIC_ALLOCATION>)
+endif ()
 target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:MAXNC=600>)
 target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:MXNAF=3>)
 target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:UNDERSCORE>)
