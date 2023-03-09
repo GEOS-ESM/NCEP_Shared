@@ -8,6 +8,9 @@
 ! CREATION HISTORY:
 !       Written by:     Paul van Delst, 23-Feb-2004
 !                       paul.vandelst@noaa.gov
+!       Modified by     Yingtao Ma, 2020/6/11
+!                       yingtao.ma@noaa.gov
+!                       Implemented CMAQ aerosol
 !
 
 MODULE CRTM_Atmosphere_Define
@@ -51,23 +54,14 @@ MODULE CRTM_Atmosphere_Define
                                    CRTM_Cloud_Zero, &
                                    CRTM_Cloud_IsValid, &
                                    CRTM_Cloud_Inspect, &
-                                   CRTM_Cloud_DefineVersion, &
+!yma                                   CRTM_Cloud_DefineVersion, &
                                    CRTM_Cloud_Compare, &
                                    CRTM_Cloud_SetLayers, &
                                    CRTM_Cloud_ReadFile, &
                                    CRTM_Cloud_WriteFile
-  USE CRTM_Aerosol_Define  , ONLY: N_VALID_AEROSOL_CATEGORIES, &
-                                   INVALID_AEROSOL       , &
-                                   DUST_AEROSOL          , &
-                                   SEASALT_SSAM_AEROSOL  , &
-                                   SEASALT_SSCM1_AEROSOL , &
-                                   SEASALT_SSCM2_AEROSOL , &
-                                   SEASALT_SSCM3_AEROSOL , &
-                                   ORGANIC_CARBON_AEROSOL, &
-                                   BLACK_CARBON_AEROSOL  , &
-                                   SULFATE_AEROSOL       , &
-                                   AEROSOL_CATEGORY_NAME, &
-                                   CRTM_Aerosol_type, &
+  USE AerosolCoeff_Define  , ONLY: AerosolCoeff_n_aerosol_categories, &
+                                   AerosolCoeff_INVALID_AEROSOL
+  USE CRTM_Aerosol_Define  , ONLY: CRTM_Aerosol_type, &
                                    OPERATOR(==), &
                                    OPERATOR(+), &
                                    OPERATOR(-), &
@@ -81,7 +75,7 @@ MODULE CRTM_Atmosphere_Define
                                    CRTM_Aerosol_Zero, &
                                    CRTM_Aerosol_IsValid, &
                                    CRTM_Aerosol_Inspect, &
-                                   CRTM_Aerosol_DefineVersion, &
+                                   !CRTM_Aerosol_DefineVersion, &
                                    CRTM_Aerosol_Compare, &
                                    CRTM_Aerosol_SetLayers, &
                                    CRTM_Aerosol_ReadFile, &
@@ -123,21 +117,11 @@ MODULE CRTM_Atmosphere_Define
   PUBLIC :: CRTM_Cloud_Zero
   PUBLIC :: CRTM_Cloud_IsValid
   PUBLIC :: CRTM_Cloud_Inspect
-  PUBLIC :: CRTM_Cloud_DefineVersion
+!yma  PUBLIC :: CRTM_Cloud_DefineVersion
   PUBLIC :: CRTM_Cloud_SetLayers
   ! Aerosol entities
   ! ...Parameters
-  PUBLIC :: N_VALID_AEROSOL_CATEGORIES
-  PUBLIC :: INVALID_AEROSOL
-  PUBLIC :: DUST_AEROSOL
-  PUBLIC :: SEASALT_SSAM_AEROSOL
-  PUBLIC :: SEASALT_SSCM1_AEROSOL
-  PUBLIC :: SEASALT_SSCM2_AEROSOL
-  PUBLIC :: SEASALT_SSCM3_AEROSOL
-  PUBLIC :: ORGANIC_CARBON_AEROSOL
-  PUBLIC :: BLACK_CARBON_AEROSOL
-  PUBLIC :: SULFATE_AEROSOL
-  PUBLIC :: AEROSOL_CATEGORY_NAME
+  PUBLIC :: AerosolCoeff_INVALID_AEROSOL
   ! ...Structures
   PUBLIC :: CRTM_Aerosol_type
   ! ...Procedures
@@ -150,8 +134,9 @@ MODULE CRTM_Atmosphere_Define
   PUBLIC :: CRTM_Aerosol_Zero
   PUBLIC :: CRTM_Aerosol_IsValid
   PUBLIC :: CRTM_Aerosol_Inspect
-  PUBLIC :: CRTM_Aerosol_DefineVersion
+  !PUBLIC :: CRTM_Aerosol_DefineVersion
   PUBLIC :: CRTM_Aerosol_SetLayers
+  PUBLIC :: AerosolCoeff_n_aerosol_categories
   ! Atmosphere entities
   ! ...Parameters
   PUBLIC :: N_VALID_ABSORBER_IDS
@@ -197,7 +182,7 @@ MODULE CRTM_Atmosphere_Define
   PUBLIC :: CRTM_Atmosphere_Zero
   PUBLIC :: CRTM_Atmosphere_IsValid
   PUBLIC :: CRTM_Atmosphere_Inspect
-  PUBLIC :: CRTM_Atmosphere_DefineVersion
+  !PUBLIC :: CRTM_Atmosphere_DefineVersion
   PUBLIC :: CRTM_Atmosphere_Compare
   PUBLIC :: CRTM_Atmosphere_SetLayers
   PUBLIC :: CRTM_Atmosphere_InquireFile
@@ -247,9 +232,6 @@ MODULE CRTM_Atmosphere_Define
   ! -----------------
   ! Module parameters
   ! -----------------
-  CHARACTER(*), PARAMETER :: MODULE_VERSION_ID = &
-  '$Id$'
-
   ! The absorber IDs. Use HITRAN definitions
   INTEGER, PARAMETER :: N_VALID_ABSORBER_IDS = 32
   INTEGER, PARAMETER :: INVALID_ABSORBER_ID =  0
@@ -768,7 +750,7 @@ CONTAINS
     DO n = 1, atm%n_Aerosols
       modified_atm%Aerosol(n)%Type = atm%Aerosol(n)%Type
     END DO
-    
+
   END SUBROUTINE CRTM_Atmosphere_NonVariableCopy
 
 
@@ -947,7 +929,7 @@ CONTAINS
       msg = 'Invalid layer cloud fraction found'
       CALL Display_Message( ROUTINE_NAME, msg, INFORMATION )
       IsValid = .FALSE.
-    ENDIF    
+    ENDIF
     ! ...Structure components
     IF ( Atm%n_Clouds > 0 ) THEN
       DO nc = 1, Atm%n_Clouds
@@ -1011,14 +993,14 @@ CONTAINS
     INTEGER :: fid
     INTEGER :: lClimatology
     INTEGER :: j, k
-    
+
     ! Setup
     fid = OUTPUT_UNIT
     IF ( PRESENT(Unit) ) THEN
       IF ( File_Open(Unit) ) fid = Unit
     END IF
 
-    
+
     WRITE(fid, '(1x,"ATMOSPHERE OBJECT")')
     ! Dimensions
     WRITE(fid, '(3x,"n_Layers    :",1x,i0)') Atm%n_Layers
@@ -1034,19 +1016,19 @@ CONTAINS
     ! Profile information
     k = Atm%n_Layers
     WRITE(fid, '(3x,"Level pressure:")')
-    WRITE(fid, '(5(1x,es13.6,:))') Atm%Level_Pressure(0:k)
+    WRITE(fid, '(5(1x,es22.15,:))') Atm%Level_Pressure(0:k)
     WRITE(fid, '(3x,"Layer pressure:")')
-    WRITE(fid, '(5(1x,es13.6,:))') Atm%Pressure(1:k)
+    WRITE(fid, '(5(1x,es22.15,:))') Atm%Pressure(1:k)
     WRITE(fid, '(3x,"Layer temperature:")')
-    WRITE(fid, '(5(1x,es13.6,:))') Atm%Temperature(1:k)
+    WRITE(fid, '(5(1x,es22.15,:))') Atm%Temperature(1:k)
     WRITE(fid, '(3x,"Layer absorber:")')
     DO j = 1, Atm%n_Absorbers
       WRITE(fid, '(5x,a,"(",a,")")') TRIM(ABSORBER_ID_NAME(Atm%Absorber_Id(j))), &
                                      TRIM(ABSORBER_UNITS_NAME(Atm%Absorber_Units(j)))
-      WRITE(fid, '(5(1x,es13.6,:))') Atm%Absorber(1:k,j)
+      WRITE(fid, '(5(1x,es22.15,:))') Atm%Absorber(1:k,j)
     END DO
-    WRITE(fid, '(3x,"Layer cloud fraction:")')    
-    WRITE(fid, '(5(1x,es13.6,:))') Atm%Cloud_Fraction(1:k)
+    WRITE(fid, '(3x,"Layer cloud fraction:")')
+    WRITE(fid, '(5(1x,es22.15,:))') Atm%Cloud_Fraction(1:k)
     ! Cloud information
     IF ( Atm%n_Clouds > 0 ) CALL CRTM_Cloud_Inspect(Atm%Cloud, Unit=Unit)
     ! Aerosol information
@@ -1084,36 +1066,6 @@ CONTAINS
       END DO
     END DO
   END SUBROUTINE Rank2_Inspect
-
-
-!--------------------------------------------------------------------------------
-!:sdoc+:
-!
-! NAME:
-!       CRTM_Atmosphere_DefineVersion
-!
-! PURPOSE:
-!       Subroutine to return the module version information.
-!
-! CALLING SEQUENCE:
-!       CALL CRTM_Atmosphere_DefineVersion( Id )
-!
-! OUTPUTS:
-!       Id:            Character string containing the version Id information
-!                      for the module.
-!                      UNITS:      N/A
-!                      TYPE:       CHARACTER(*)
-!                      DIMENSION:  Scalar
-!                      ATTRIBUTES: INTENT(OUT)
-!
-!:sdoc-:
-!--------------------------------------------------------------------------------
-
-  SUBROUTINE CRTM_Atmosphere_DefineVersion( Id )
-    CHARACTER(*), INTENT(OUT) :: Id
-    Id = MODULE_VERSION_ID
-  END SUBROUTINE CRTM_Atmosphere_DefineVersion
-
 
 !--------------------------------------------------------------------------------
 !:sdoc+:
@@ -1373,7 +1325,7 @@ CONTAINS
     INTEGER :: n_absorbers
     INTEGER :: max_clouds, n_clouds
     INTEGER :: max_aerosols, n_aerosols
-    
+
     IF ( n_Layers < Atmosphere%Max_Layers ) THEN
       ! Just update the layer counts
       Atmosphere%n_Layers = n_Layers
@@ -1396,7 +1348,7 @@ CONTAINS
       Atmosphere%n_Aerosols = n_aerosols
     END IF
   END SUBROUTINE CRTM_Atmosphere_SetLayers
-  
+
 
 !------------------------------------------------------------------------------
 !:sdoc+:
@@ -1663,8 +1615,8 @@ CONTAINS
       msg = 'Error allocating Atmosphere array - '//TRIM(alloc_msg)
       CALL Read_Cleanup(); RETURN
     END IF
-    
-    
+
+
     ! Loop over all the profiles
     Profile_Loop: DO m = 1, n_input_profiles
       err_stat = Read_Record( fid, Atmosphere(m), &
@@ -1704,7 +1656,7 @@ CONTAINS
         IF ( io_stat /= 0 ) &
           msg = TRIM(msg)//'; Error closing input file during error cleanup - '//TRIM(io_msg)
       END IF
-      IF ( ALLOCATED(Atmosphere) ) THEN 
+      IF ( ALLOCATED(Atmosphere) ) THEN
        !DEALLOCATE(Atmosphere, STAT=alloc_stat, ERRMSG=alloc_msg)
         DEALLOCATE(Atmosphere, STAT=alloc_stat)
         IF ( alloc_stat /= 0 ) &
@@ -1824,7 +1776,7 @@ CONTAINS
         IF ( io_stat /= 0 ) &
           msg = TRIM(msg)//'; Error closing input file during error cleanup - '//TRIM(io_msg)
       END IF
-      IF ( ALLOCATED(Atmosphere) ) THEN 
+      IF ( ALLOCATED(Atmosphere) ) THEN
        !DEALLOCATE(Atmosphere, STAT=alloc_stat, ERRMSG=alloc_msg)
         DEALLOCATE(Atmosphere, STAT=alloc_stat)
         IF ( alloc_stat /= 0 ) &
@@ -2192,7 +2144,7 @@ CONTAINS
         IF ( .NOT. ALL(x%Aerosol == y%Aerosol) ) RETURN
       END IF
     END IF
-    
+
 
     ! If we get here, then...
     is_equal = .TRUE.

@@ -52,9 +52,6 @@ MODULE RTV_Define
   PUBLIC :: SMALL_OD_FOR_SC
   PUBLIC :: MAX_N_DOUBLING
   PUBLIC :: MAX_N_SOI_ITERATIONS
-  PUBLIC :: MAX_N_STOKES
-  PUBLIC :: MAX_N_LEG
-  PUBLIC :: MAX_N_QUAD
   ! Datatypes
   PUBLIC :: aircraft_rt_type
   PUBLIC :: RTV_type
@@ -67,8 +64,6 @@ MODULE RTV_Define
   ! Module parameters
   ! -----------------
   ! Version Id for the module
-  CHARACTER(*),  PARAMETER :: MODULE_RCS_ID = &
-  '$Id$'
 
   ! Threshold for determing if an additional stream
   ! angle is required for the satellite zenith angle
@@ -90,11 +85,6 @@ MODULE RTV_Define
   
   ! The maximum number of iterations for the SOI solution method.
   INTEGER,  PARAMETER :: MAX_N_SOI_ITERATIONS = 75
-  
-  ! The maximum number of Stokes parameters and Legendre expansion terms for the P2S method.
-  INTEGER,  PARAMETER :: MAX_N_STOKES = 2
-  INTEGER,  PARAMETER :: MAX_N_LEG = 20
-  INTEGER,  PARAMETER :: MAX_N_QUAD = 6
   
   ! ---------------------
   ! Structure definitions
@@ -263,22 +253,6 @@ MODULE RTV_Define
     REAL(fp), ALLOCATABLE :: Inv_BeT(:,:,:,:)    ! n_Angles, n_Angles, 0:MAX_N_DOUBLING, n_Layers
     REAL(fp), ALLOCATABLE :: C1(:,:)             ! n_Angles, n_Layers
     REAL(fp), ALLOCATABLE :: C2(:,:)             ! n_Angles, n_Layers
-
-    !-----------------------------------
-    ! Variables used in the P2S routines
-    !-----------------------------------
-    REAL(fp), ALLOCATABLE :: pff2(:,:)           ! MAX_N_QUAD, n_Layers    
-    REAL(fp), ALLOCATABLE :: pbb2(:,:)           ! MAX_N_QUAD, n_Layers 
-    REAL(fp), ALLOCATABLE :: reflection(:)       ! n_Layers
-    REAL(fp), ALLOCATABLE :: transmission(:)     ! n_Layers
-    REAL(fp), ALLOCATABLE :: qq1(:)              ! n_Layers
-    REAL(fp), ALLOCATABLE :: qq(:)               ! n_Layers
-    REAL(fp), ALLOCATABLE :: scat_phase(:,:,:)   ! n_Layers, MAX_N_LEG, MAX_N_STOKES
-
-    !---------------------------------------------
-    ! Variables used in the P2S and EDD routines
-    !---------------------------------------------
-    REAL(fp), ALLOCATABLE :: s_Rad_UP
 
 
     ! The surface optics forward variables
@@ -506,18 +480,6 @@ CONTAINS
               RTV%Inv_BeT(n_Angles, n_Angles, 0:MAX_N_DOUBLING, n_Layers), &
               RTV%C1(n_Angles, n_Layers), &
               RTV%C2(n_Angles, n_Layers), &
-              STAT = alloc_stat )
-    IF ( alloc_stat /= 0 ) RETURN
-
-    ! Perform the allocation for P2S variables
-    ALLOCATE( RTV%pff2( MAX_N_QUAD, n_Layers ), &
-              RTV%pbb2( MAX_N_QUAD, n_Layers ), &
-              RTV%reflection( n_Layers ), &  
-              RTV%transmission( n_Layers ), &
-              RTV%qq1( n_Layers ), &    
-              RTV%qq( n_Layers ), &
-              RTV%scat_phase( n_Layers, MAX_N_LEG, MAX_N_STOKES ), &
-              RTV%s_Rad_UP, &
               STAT = alloc_stat )
     IF ( alloc_stat /= 0 ) RETURN
 
