@@ -64,8 +64,6 @@ MODULE CRTM_AtmOptics
   ! ---------------
   ! Module parameters
   ! ---------------
-  CHARACTER(*), PARAMETER :: MODULE_VERSION_ID = &
-  '$Id$'
   ! Message string length
   INTEGER, PARAMETER :: ML = 256
 
@@ -398,8 +396,6 @@ CONTAINS
       Significant_Scattering: IF( AOvar%bs(k) > BS_THRESHOLD ) THEN
 
         AOvar%w(k) = AtmOptics%Single_Scatter_Albedo(k) / AtmOptics%Optical_Depth(k)
-        AtmOptics%Asymmetry_Factor(k) = AtmOptics%Asymmetry_Factor(k) / &
-                                        AtmOptics%Single_Scatter_Albedo(k)
         DO i = 1, AtmOptics%n_Phase_Elements
           DO l = 1, AtmOptics%n_Legendre_Terms
             AtmOptics%Phase_Coefficient(l,i,k) = AtmOptics%Phase_Coefficient(l,i,k) / &
@@ -408,13 +404,9 @@ CONTAINS
           ! ...Normalization requirement for energy conservation
           AtmOptics%Phase_Coefficient(0,i,k) = POINT_5
         END DO
+        AtmOptics%Delta_Truncation(k) = AtmOptics%Phase_Coefficient(AtmOptics%n_Legendre_Terms,1,k)
 
-        IF ( AtmOptics%Delta_Adjust ) THEN
-          AtmOptics%Delta_Truncation(k) = AtmOptics%Phase_Coefficient(AtmOptics%n_Legendre_Terms,1,k)
-        ELSE
-          AtmOptics%Delta_Truncation(k) = ZERO
-        END IF
- 
+
         ! Redfine the total optical depth and single scattering
         ! albedo for the delta-function adjustment
         AtmOptics%Optical_Depth(k) = ( ONE - ( AtmOptics%Delta_Truncation(k) * AOvar%w(k) )) * &
@@ -423,6 +415,7 @@ CONTAINS
                                              ( ONE - ( AtmOptics%Delta_Truncation(k) * AOvar%w(k) ) )
 
       END IF Significant_Scattering
+
 
       ! Compute the vertically integrated scattering optical depth
       AtmOptics%Scattering_Optical_Depth = AtmOptics%Scattering_Optical_Depth + &
@@ -525,12 +518,8 @@ CONTAINS
           ! ...Normalization requirement for energy conservation
           AtmOptics_TL%Phase_Coefficient(0,i,k) = ZERO
         END DO
+        AtmOptics_TL%Delta_Truncation(k) = AtmOptics_TL%Phase_Coefficient(AtmOptics%n_Legendre_Terms,1,k)
 
-        IF ( AtmOptics%Delta_Adjust ) THEN
-          AtmOptics_TL%Delta_Truncation(k) = AtmOptics_TL%Phase_Coefficient(AtmOptics%n_Legendre_Terms,1,k)
-        ELSE
-          AtmOptics_TL%Delta_Truncation(k) = ZERO
-        END IF
 
         ! Redefine the tangent-linear total optical depth and
         ! single scattering albedo for the delta-function adjustment
@@ -549,10 +538,10 @@ CONTAINS
         !
         !  Note that the optical depth from the AOvar structure is
         !  used on the RHS of these expressions.
-          AtmOptics_TL%Optical_Depth(k) = &
-              ( ( ONE - ( AtmOptics%Delta_Truncation(k) * AOvar%w(k) ) ) * AtmOptics_TL%Optical_Depth(k) ) - &
-              ( AtmOptics%Delta_Truncation(k) * AOvar%Optical_Depth(k) * w_TL ) - &
-              ( AOvar%w(k) * AOvar%Optical_Depth(k) * AtmOptics_TL%Delta_Truncation(k) )
+        AtmOptics_TL%Optical_Depth(k) = &
+            ( ( ONE - ( AtmOptics%Delta_Truncation(k) * AOvar%w(k) ) ) * AtmOptics_TL%Optical_Depth(k) ) - &
+            ( AtmOptics%Delta_Truncation(k) * AOvar%Optical_Depth(k) * w_TL ) - &
+            ( AOvar%w(k) * AOvar%Optical_Depth(k) * AtmOptics_TL%Delta_Truncation(k) )
 
 
         !  The single scatter albedo, SSA
@@ -567,11 +556,11 @@ CONTAINS
         !  SSA_TL = ------------------- . w_TL  +  --------------- . d_TL
         !                1 - d.w                       1 - d.w
         !
-          AtmOptics_TL%Single_Scatter_Albedo(k) = &
-            ( ( ( ONE - AtmOptics%Delta_Truncation(k) + &
-                  ( AtmOptics%Single_Scatter_Albedo(k)*AtmOptics%Delta_Truncation(k) ) ) * w_TL ) + &
-              ( ( AtmOptics%Single_Scatter_Albedo(k) - ONE ) * AOvar%w(k) * AtmOptics_TL%Delta_Truncation(k) ) ) / &
-            ( ONE - ( AtmOptics%Delta_Truncation(k) * AOvar%w(k) ) )
+        AtmOptics_TL%Single_Scatter_Albedo(k) = &
+          ( ( ( ONE - AtmOptics%Delta_Truncation(k) + &
+                ( AtmOptics%Single_Scatter_Albedo(k)*AtmOptics%Delta_Truncation(k) ) ) * w_TL ) + &
+            ( ( AtmOptics%Single_Scatter_Albedo(k) - ONE ) * AOvar%w(k) * AtmOptics_TL%Delta_Truncation(k) ) ) / &
+          ( ONE - ( AtmOptics%Delta_Truncation(k) * AOvar%w(k) ) )
 
       END IF Significant_Scattering
 
@@ -660,8 +649,6 @@ CONTAINS
       Significant_Scattering: IF( AOvar%bs(k) > BS_THRESHOLD) THEN
 
 
-        IF ( AtmOptics%Delta_Adjust ) THEN
-
         ! Compute the adjoint total optical depth and single
         ! scattering albedo for the delta function adjustment
 
@@ -682,16 +669,16 @@ CONTAINS
         !
         !    SSA_AD = 0
 
-          AtmOptics_AD%Delta_Truncation(k) = AtmOptics_AD%Delta_Truncation(k) + &
-            ( ( AtmOptics%Single_Scatter_Albedo(k) - ONE ) * AOvar%w(k) * AtmOptics_AD%Single_Scatter_Albedo(k) / &
-              ( ONE - ( AtmOptics%Delta_Truncation(k) * AOvar%w(k) ) ) )
+        AtmOptics_AD%Delta_Truncation(k) = AtmOptics_AD%Delta_Truncation(k) + &
+          ( ( AtmOptics%Single_Scatter_Albedo(k) - ONE ) * AOvar%w(k) * AtmOptics_AD%Single_Scatter_Albedo(k) / &
+            ( ONE - ( AtmOptics%Delta_Truncation(k) * AOvar%w(k) ) ) )
 
-          w_AD = w_AD + ( ( ONE - AtmOptics%Delta_Truncation(k) + &
-                            ( AtmOptics%Single_Scatter_Albedo(k)*AtmOptics%Delta_Truncation(k) ) ) * &
-                          AtmOptics_AD%Single_Scatter_Albedo(k) / &
-                          ( ONE - ( AtmOptics%Delta_Truncation(k) * AOvar%w(k) ) ) )
+        w_AD = w_AD + ( ( ONE - AtmOptics%Delta_Truncation(k) + &
+                          ( AtmOptics%Single_Scatter_Albedo(k)*AtmOptics%Delta_Truncation(k) ) ) * &
+                        AtmOptics_AD%Single_Scatter_Albedo(k) / &
+                        ( ONE - ( AtmOptics%Delta_Truncation(k) * AOvar%w(k) ) ) )
 
-          AtmOptics_AD%Single_Scatter_Albedo(k) = ZERO
+        AtmOptics_AD%Single_Scatter_Albedo(k) = ZERO
 
 
         !  The tangent-linear optical depth, tau_TL
@@ -709,32 +696,24 @@ CONTAINS
         !  Note that the optical depth from the AOvar structure is
         !  used on the RHS of the above expressions.
 
-          AtmOptics_AD%Delta_Truncation(k) = AtmOptics_AD%Delta_Truncation(k) - &
-            ( AOvar%w(k)                    * &  ! w
-              AOvar%Optical_Depth(k)        * &  ! tau
-              AtmOptics_AD%Optical_Depth(k) )  ! tau_AD
+        AtmOptics_AD%Delta_Truncation(k) = AtmOptics_AD%Delta_Truncation(k) - &
+          ( AOvar%w(k)                    * &  ! w
+            AOvar%Optical_Depth(k)        * &  ! tau
+            AtmOptics_AD%Optical_Depth(k) )  ! tau_AD
 
-          w_AD = w_AD - ( AtmOptics%Delta_Truncation(k) * &  ! d
-                          AOvar%Optical_Depth(k)          * &  ! tau
-                          AtmOptics_AD%Optical_Depth(k)   )  ! tau_AD
+        w_AD = w_AD - ( AtmOptics%Delta_Truncation(k) * &  ! d
+                        AOvar%Optical_Depth(k)          * &  ! tau
+                        AtmOptics_AD%Optical_Depth(k)   )  ! tau_AD
 
-          AtmOptics_AD%Optical_Depth(k) = ( ONE - ( AtmOptics%Delta_Truncation(k) * AOvar%w(k) ) ) * &
+        AtmOptics_AD%Optical_Depth(k) = ( ONE - ( AtmOptics%Delta_Truncation(k) * AOvar%w(k) ) ) * &
                                         AtmOptics_AD%Optical_Depth(k)
 
 
         !  Delta truncation adjoint
-          l = AtmOptics%n_Legendre_Terms
-!          IF ( AtmOptics%Delta_Adjust ) THEN
-            AtmOptics_AD%Phase_Coefficient(l,1,k) = AtmOptics_AD%Phase_Coefficient(l,1,k) + &
-                                                    AtmOptics_AD%Delta_Truncation(k)
-            AtmOptics_AD%Delta_Truncation(k) = ZERO
-!          ELSE
-!            AtmOptics_AD%Delta_Truncation(k) = ZERO
-!          END IF
-
-        ELSE
-          AtmOptics_AD%Delta_Truncation(k) = ZERO
-        END IF
+        l = AtmOptics%n_Legendre_Terms
+        AtmOptics_AD%Phase_Coefficient(l,1,k) = AtmOptics_AD%Phase_Coefficient(l,1,k) + &
+                                                AtmOptics_AD%Delta_Truncation(k)
+        AtmOptics_AD%Delta_Truncation(k) = ZERO
 
         DO i = 1, AtmOptics%n_Phase_Elements
           ! Normalization requirement for energy conservation

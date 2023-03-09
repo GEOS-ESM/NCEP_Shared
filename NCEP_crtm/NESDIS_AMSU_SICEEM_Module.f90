@@ -1,18 +1,3 @@
-!
-! NESDIS_AMSU_SICEEM_Module
-!
-! Module containing the AMSU microwave sea ice emissivity model
-!
-! References:
-!       Yan,B., F.Weng and K.Okamoto,2004: "A microwave snow emissivity model",
-!         8th Specialist Meeting on Microwave Radiometry and Remote Sensing Applications,
-!         24-27 February, 2004, Rome, Italy.
-!
-!
-! CREATION HISTORY:
-!       Written by:     Banghua Yan, 16-May-2005, banghua.yan@noaa.gov
-!                       Fuzhong Weng, fuzhong.weng@noaa.gov
-!
 
 MODULE NESDIS_AMSU_SICEEM_Module
 
@@ -37,21 +22,11 @@ MODULE NESDIS_AMSU_SICEEM_Module
   ! -----------------
   ! Module parameters
   ! -----------------
-  ! Version Id for the module
-  CHARACTER(*), PARAMETER :: MODULE_VERSION_ID = &
-  '$Id$'
 
 
 CONTAINS
 
 
-!################################################################################
-!################################################################################
-!##                                                                            ##
-!##                         ## PUBLIC MODULE ROUTINES ##                       ##
-!##                                                                            ##
-!################################################################################
-!################################################################################
 
 !-------------------------------------------------------------------------------------------------------------
 !
@@ -182,16 +157,6 @@ CONTAINS
 !
 !  Copyright (C) 2005 Fuzhong Weng and Banghua Yan
 !
-!  This program is free software; you can redistribute it and/or modify it under the terms of the GNU
-!  General Public License as published by the Free Software Foundation; either version 2 of the License,
-!  or (at your option) any later version.
-!
-!  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
-!  the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
-!  License for more details.
-!
-!  You should have received a copy of the GNU General Public License along with this program; if not, write
-!  to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 !
 !------------------------------------------------------------------------------------------------------------
 
@@ -215,7 +180,6 @@ subroutine  NESDIS_ICEEM_AMSU(Satellite_Angle,                                  
   real(fp), intent(out) :: Emissivity_H,Emissivity_V
 
 
-!  Initialization
 
   em_vector(1) = 0.82_fp
 
@@ -226,7 +190,6 @@ subroutine  NESDIS_ICEEM_AMSU(Satellite_Angle,                                  
   input_type = 1
 
 
-! Check available data
 
   do i=1,nwcha
      if((tba(i) <= 100.0_fp) .or. (tba(i) >= 320.0_fp) ) then
@@ -249,7 +212,6 @@ subroutine  NESDIS_ICEEM_AMSU(Satellite_Angle,                                  
   if ((Ts <= 150.0_fp) .or. (Ts >= 280.0_fp) ) Ts = 260.0
 
 
-! Emissivity at the local zenith angle of satellite measurements
 
   GET_option: SELECT CASE (input_type)
 
@@ -264,7 +226,6 @@ subroutine  NESDIS_ICEEM_AMSU(Satellite_Angle,                                  
   END SELECT GET_option
 
 
-! Get the emissivity angle dependence
 
   call NESDIS_LandEM(Satellite_Angle,Frequency,0.0_fp,0.0_fp,Ts,Ts,0.0_fp,9,13,2.0_fp,esh1,esv1)
 
@@ -276,7 +237,6 @@ subroutine  NESDIS_ICEEM_AMSU(Satellite_Angle,                                  
 
   dem = ( desh + desv ) * 0.5_fp
 
-! Emissivity at User's Angle
 
   Emissivity_H = em_vector(1) - dem;  Emissivity_V = em_vector(2)- dem
 
@@ -293,56 +253,15 @@ end subroutine NESDIS_ICEEM_AMSU
 
 
 subroutine AMSU_IATs(frequency,tba,ts,em_vector)
-!------------------------------------------------------------------------------------------------------------
-!$$$  subprogram documentation block
-!                .      .    .                                       .
-! subprogram:
-!
-!   prgmmr: Banghua Yan                 org: nesdis              date: 2004-03-01
-!
-! abstract:
-!         Calculate the emissivity discriminators and interpolate/extrapolate
-!  emissivity at required frequency with respect to secenery AMSUA & Ts
-!
-! program history log:
-!
-! input argument list:
-!
-!      frequency        -  frequency in GHz
-!      theta            -  local zenith angle in radian (not used here)
-!      ts               -  surface temperature
-!      tba[1] ~ tba[4]  -  brightness temperature at five AMSU-A window channels:
-!                              tba[1] : 23.8 GHz
-!                              tba[2] : 31.4 GHz
-!                              tba[3] : 50.3 GHz
-!                              tba[4] : 89   GHz
-!
-! output argument list:
-!
-!   em_vector[1] and [2]  -  emissivity at two polarizations.
-!                              set esv = esh here and will be updated
-!
-! important internal variables:
-!
-!   coe   - fitting coefficients to estimate discriminator at 23.8 ~ 89   GHz
-!
-! remarks:
-!
-! attributes:
-!   language: f90
-!   machine:  ibm rs/6000 sp
-!
-!------------------------------------------------------------------------------------------------------------
 
   integer,parameter:: nch =10,nwch = 5,ncoe = 4
   real(fp)    :: tba(*)
   real(fp)    :: em_vector(*),emissivity,ts,frequency,discriminator(nwch)
-  integer :: k,ich
+  integer     :: ich
   real(fp)    :: coe(100)
 
   save coe
 
-! Fitting Coefficients Using Tb1, Tb2, Tb4 and Ts
   coe(1:5) = (/ 9.815214e-001_fp,  3.783815e-003_fp,  &
        6.391155e-004_fp, -9.106375e-005_fp, -4.263206e-003_fp/)
   coe(21:25) = (/ 9.047181e-001_fp, -2.782826e-004_fp,  &
@@ -353,10 +272,8 @@ subroutine AMSU_IATs(frequency,tba,ts,em_vector)
        9.624331e-004_fp,  4.878773e-003_fp, -5.055044e-003_fp/)
   coe(81:85) = (/ 1.438246e+000_fp,  5.667756e-004_fp, &
        -2.621972e-003_fp,  5.928146e-003_fp, -5.856687e-003_fp/)
-! save coe
 
 
-! Calculate emissivity discriminators at five AMSU window channels
 
   do ich = 1, nwch
      discriminator(ich) = coe(1+(ich-1)*20)
@@ -377,54 +294,15 @@ end subroutine AMSU_IATs
 
 
 subroutine AMSU_IBTs(theta,frequency,tbb,ts,em_vector)
-!------------------------------------------------------------------------------------------------------------
-!$$$  subprogram documentation block
-!                .      .    .                                       .
-! subprogram:
-!
-!   prgmmr:Banghua Yan                  org: nesdis              date: 2004-03-01
-!
-! abstract:
-!         Calculate the emissivity discriminators and interpolate/extrapolate
-!  emissivity at required frequency with respect to secenery BTs
-!
-! program history log:
-!
-! input argument list:
-!
-!      frequency        -  frequency in GHz
-!      theta            -  local zenith angle
-!      ts               -  surface temperature in degree
-!      tbb[1] ~ tbb[2]  -  brightness temperature at five AMSU-B window channels:
-!                              tbb[1] : 89  GHz
-!                              tbb[2] : 150 GHz
-!
-! output argument list:
-!
-!   em_vector(1) and (2)  -  emissivity at two polarizations.
-!                              set esv = esh here and will be updated
-!
-! important internal variables:
-!
-!   coe   - fitting coefficients to estimate discriminator at 31.4 ~ 150  GHz
-!
-! remarks:
-!
-! attributes:
-!   language: f90
-!   machine:  ibm rs/6000 sp
-!
-!------------------------------------------------------------------------------------------------------------
 
   integer,parameter:: nch =10,nwch = 5,ncoe = 6
   real(fp)    :: tbb(*),theta
   real(fp)    :: em_vector(*),emissivity,ts,frequency,discriminator(nwch)
-  integer :: i,k,ich,nvalid_ch
+  integer     :: i,ich,nvalid_ch
   real(fp)    :: coe(nch*(ncoe+1))
 
   save coe
 
-! Fitting Coefficients at 31.4 GHz
   coe(1:7) = (/ 2.239429e+000_fp, -2.153967e-002_fp,  &
        5.785736e-005_fp,  1.366728e-002_fp,    &
        -3.749251e-005_fp, -5.128486e-002_fp, -2.184161e-003_fp/)
@@ -434,9 +312,7 @@ subroutine AMSU_IBTs(theta,frequency,tbb,ts,em_vector)
   coe(21:27) = (/ 8.910227e-001_fp,  6.170706e-003_fp, &
        -3.772921e-006_fp, -4.146567e-004_fp,   &
        -2.208121e-006_fp, -3.163193e-002_fp, -3.863217e-003_fp/)
-! save coe
 
-! Calculate emissivity discriminators at five AMSU window channels
   do ich = 1, nwch-2
      discriminator(ich) = coe(1+(ich-1)*10)
      nvalid_ch = 2
@@ -462,51 +338,12 @@ end subroutine AMSU_IBTs
 
 
 subroutine  siem_interpolate(frequency,discriminator,emissivity)
-!------------------------------------------------------------------------------------------------------------
-!$$$  subprogram documentation block
-!                .      .    .                                       .
-! subprogram:
-!
-!   prgmmr:Banghua Yan                  org: nesdis              date: 2004-03-01
-!
-! abstract:
-!        (1) Find one snow emissivity spectrum to mimic the emission property of the
-! realistic snow condition using a set of discrminators
-!        (2) Interpolate/extrapolate emissivity at a required frequency
-!
-! program history log:
-!
-! input argument list:
-!
-!      frequency       - frequency in GHz
-!      discriminators  - emissivity discriminators at five AMSU-A & B window channels
-!            discriminator[1]   :  emissivity discriminator at 23.8 GHz
-!            discriminator[2]   :  emissivity discriminator at 31.4 GHz
-!            discriminator[3]   :  emissivity discriminator at 50.3 GHz
-!            discriminator[4]   :  emissivity discriminator at 89   GHz
-!            discriminator[5]   :  emissivity discriminator at 150  GHz
-!
-!       Note: discriminator(1) and discriminator(3) are missing value in
-!            'AMSU-B & Ts','AMUS-B' and 'MODL' options., which are defined to as -999.9,
-! output argument list:
-!
-!   em_vector[1] and [2]  -  emissivity at two polarizations.
-!       seaice_type             -  snow type (reference [2])
-!
-! remarks:
-!
-! attributes:
-!   language: f90
-!   machine:  ibm rs/6000 sp
-!
-!------------------------------------------------------------------------------------------------------------
 
   integer,parameter:: ncand = 16,nch =5
   integer:: i
   real(fp)   :: frequency,freq(nch),emissivity,discriminator(*)
   freq = (/23.8_fp, 31.4_fp, 50.3_fp,89.0_fp, 150.0_fp/)
 
-! Estimate sea ice emissivity at a required frequency
 
 
   do i = 2, nch
@@ -522,7 +359,6 @@ subroutine  siem_interpolate(frequency,discriminator,emissivity)
 
   if(frequency < freq(1))    emissivity = discriminator(1)
 
-! Assume emissivity = constant at frequencies >= 150 GHz
 
   if (frequency >= freq(nch)) emissivity = discriminator(nch)
 

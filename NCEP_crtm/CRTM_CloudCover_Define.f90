@@ -25,11 +25,12 @@ MODULE CRTM_CloudCover_Define
                                     OPERATOR(.EqualTo.), &
                                     Compares_Within_Tolerance
   USE CRTM_Parameters       , ONLY: ZERO, ONE, &
+                                    MIN_COVERAGE_THRESHOLD, &
                                     WATER_CONTENT_THRESHOLD
   USE CRTM_Atmosphere_Define, ONLY: CRTM_Atmosphere_type, &
                                     CRTM_Atmosphere_Associated
   USE CRTM_Cloud_Define     , ONLY: OPERATOR(==), &
-                                    OPERATOR(+), &
+                                    OPERATOR(+),  &
                                     CRTM_Cloud_type, &
                                     CRTM_Cloud_Associated, &
                                     CRTM_Cloud_Zero
@@ -59,8 +60,6 @@ MODULE CRTM_CloudCover_Define
   ! -----------------
   ! Module parameters
   ! -----------------
-  CHARACTER(*), PARAMETER :: MODULE_VERSION_ID = &
-  '$Id$'
   ! The valid cloud categories and names
 ! INTEGER, PARAMETER :: N_OVERLAPS = 4
   INTEGER, PARAMETER :: N_OVERLAPS = 5          
@@ -451,14 +450,13 @@ CONTAINS
     overlap) &  ! Optional input
   RESULT(err_stat)
     ! Arguments
-    CLASS(CRTM_CloudCover_type), INTENT(OUT)  :: self
+    CLASS(CRTM_CloudCover_type), INTENT(INOUT)  :: self
     TYPE(CRTM_Atmosphere_type) , INTENT(INOUT):: atm        
     INTEGER,           OPTIONAL, INTENT(IN)   :: overlap
     ! Function result
     INTEGER :: err_stat
     ! Local parameters
     CHARACTER(*), PARAMETER :: PROCEDURE_NAME = 'CRTM_CloudCover_Define::Compute_CloudCover'
-    REAL(fp),     PARAMETER :: MIN_COVERAGE_THRESHOLD = 1.0e-06_fp                              
     REAL(fp),     PARAMETER :: MAX_COVERAGE_THRESHOLD = ONE - MIN_COVERAGE_THRESHOLD                                 
     ! Local variables
     CHARACTER(ML) :: err_msg
@@ -483,11 +481,9 @@ CONTAINS
       CALL Display_Message(PROCEDURE_NAME, err_msg, err_stat); RETURN
     END IF
 
-
     ! Create the output object
     n_layers = Atm%n_Layers
     n_clouds = Atm%n_Clouds 
-!   CALL self%Create(n_layers, Forward = .TRUE., Error_Message = err_msg)                    
     CALL self%Create(n_layers, n_clouds, Forward = .TRUE., Error_Message = err_msg)            
     IF ( .NOT. self%Is_Usable() ) THEN
       err_stat = FAILURE
@@ -514,7 +510,7 @@ CONTAINS
 
     ! Add cloud scaling here!
     ! Partition all hydrometeors into cloudy column
-    IF (self%Total_Cloud_Cover > MIN_COVERAGE_THRESHOLD) then
+    IF (self%Total_Cloud_Cover > MIN_COVERAGE_THRESHOLD) THEN 
        DO n = 1, n_clouds 
           ! scaled cloud water content
           atm%Cloud(n)%Water_Content(1:n_layers) = atm%Cloud(n)%Water_Content(1:n_layers) / self%Total_Cloud_Cover 
@@ -554,11 +550,11 @@ CONTAINS
       prod(0)           = ONE
       self%iVar%prod(0) = prod(0)
       DO k = 1, n_layers
-        if (self%Cloud_Fraction(k) > MIN_COVERAGE_THRESHOLD) then   
-           prod(k) = prod(k-1) * (ONE - self%Cloud_Fraction(k))
-        else
+        IF (self%Cloud_Fraction(k) > MIN_COVERAGE_THRESHOLD) THEN
+            prod(k) = prod(k-1) * (ONE - self%Cloud_Fraction(k))
+        ELSE
            prod(k) = prod(k-1)
-        endif
+        ENDIF
         self%Cloud_Cover(k) = ONE - prod(k)
         self%iVar%prod(k)   = prod(k)  ! Save for TL/AD
       END DO
@@ -582,18 +578,23 @@ CONTAINS
 !   END SUBROUTINE Compute_MaxRan_Overlap
     SUBROUTINE Compute_MaxRan_Overlap()
     INTEGER  :: k
-    REAL(fp) :: prod, maxcov
+    REAL(fp) :: prod(n_layers), maxcov(n_layers)
 
-    prod                = ONE - self%Cloud_Fraction(1)
-    self%Cloud_Cover(1) = ONE - prod
-    self%iVar%prod(1)   = prod
-    self%iVar%maxcov(1) = ONE - self%Cloud_Fraction(1)
-    DO k= 2, n_layers
-       maxcov = (ONE - MAX(self%Cloud_Fraction(k-1), self%Cloud_Fraction(k)))
-       prod = prod * maxcov / (one - self%Cloud_Fraction(k-1))                                                    
-       self%iVar%maxcov(k) = maxcov 
-       self%iVar%prod(k)   = prod
-       self%Cloud_Cover(k) = ONE - prod
+    prod(1)             = ONE - self%Cloud_Fraction(1)
+    maxcov(1)           = ONE - self%Cloud_Fraction(1)
+    self%Cloud_Cover(1) = ONE - prod(1)
+    self%iVar%prod(1)   = prod(1)
+    self%iVar%maxcov(1) = maxcov(1)
+    DO k = 2, n_layers
+       maxcov(k) = (ONE - MAX(self%Cloud_Fraction(k-1), self%Cloud_Fraction(k)))
+       IF ( (self%iVar%prod(k-1) == ZERO) .and. (ONE - self%Cloud_Fraction(k-1) == ZERO) ) THEN
+          prod(k)  = maxcov(k)
+       ELSE
+          prod(k)  = prod(k-1) * (maxcov(k) / (ONE - self%Cloud_Fraction(k-1)))
+       ENDIF
+       self%iVar%maxcov(k) = maxcov(k)
+       self%iVar%prod(k)   = prod(k)
+       self%Cloud_Cover(k) = ONE - prod(k)
     ENDDO
     self%Total_Cloud_Cover = self%Cloud_Cover(n_layers)
     END SUBROUTINE Compute_MaxRan_Overlap
@@ -717,7 +718,6 @@ CONTAINS
     INTEGER :: err_stat
     ! Local parameters
     CHARACTER(*), PARAMETER :: PROCEDURE_NAME = 'CRTM_CloudCover_Define::Compute_CloudCover_TL'
-    REAL(fp),     PARAMETER :: MIN_COVERAGE_THRESHOLD = 1.0e-06_fp                               
     REAL(fp),     PARAMETER :: MAX_COVERAGE_THRESHOLD = ONE - MIN_COVERAGE_THRESHOLD      
     ! Local variables
     CHARACTER(ML) :: err_msg
@@ -746,7 +746,6 @@ CONTAINS
     ! Create the output object
     n_layers = Atm_TL%n_Layers
     n_clouds = Atm_TL%n_Clouds
-!   CALL self_TL%Create(n_layers, Error_Message = err_msg)           
     CALL self_TL%Create(n_layers, n_clouds, Error_Message = err_msg) 
     IF ( .NOT. self_TL%Is_Usable() ) THEN
       err_stat = FAILURE
@@ -810,12 +809,12 @@ CONTAINS
       prod_TL    = ZERO
       prod_TL(0) = ZERO
       DO k = 1, n_layers
-        if (cc_FWD%Cloud_Fraction(k) > MIN_COVERAGE_THRESHOLD) then    
+        IF (cc_FWD%Cloud_Fraction(k) > MIN_COVERAGE_THRESHOLD) THEN    
            prod_TL(k) = (ONE - cc_FWD%Cloud_Fraction(k))*prod_TL(k-1) - & 
                          cc_FWD%iVar%prod(k-1)*self_TL%Cloud_Fraction(k)      
-        else
+        ELSE
            prod_TL(k) = prod_TL(k-1) 
-        endif
+        ENDIF
         self_TL%Cloud_Cover(k) = -prod_TL(k)
       END DO
       self_TL%Total_Cloud_Cover = self_TL%Cloud_Cover(n_layers)
@@ -859,24 +858,36 @@ CONTAINS
 !   END SUBROUTINE Compute_MaxRan_Overlap_TL
     SUBROUTINE Compute_MaxRan_Overlap_TL()
       INTEGER  :: k
-      REAL(fp) :: prod_TL
-      REAL(fp) :: maxcov_TL
+      REAL(fp) :: prod_TL(n_layers)
+      REAL(fp) :: maxcov_TL(n_layers)
 
-      prod_TL                = -self_TL%Cloud_Fraction(1)
-      self_TL%Cloud_Cover(1) = -prod_TL
+      prod_TL(1)             = -self_TL%Cloud_Fraction(1)
+      maxcov_TL(1)           = -self_TL%Cloud_Fraction(1)
+      self_TL%Cloud_Cover(1) = -prod_TL(1)
       DO k = 2, n_layers
-         IF ((cc_FWD%Cloud_Fraction(k-1) > cc_FWD%Cloud_Fraction(k))) THEN
-            maxcov_TL = -self_TL%Cloud_Fraction(k-1)
-         ELSE IF ((cc_FWD%Cloud_Fraction(k-1) < cc_FWD%Cloud_Fraction(k))) THEN
-            maxcov_TL = -self_TL%Cloud_Fraction(k)
-         ELSE IF ((CC_FWD%Cloud_Fraction(k-1) == cc_FWD%Cloud_Fraction(k))) THEN
-            maxcov_TL = -self_TL%Cloud_Fraction(k)
+         IF (     (cc_FWD%Cloud_Fraction(k-1) >  cc_FWD%Cloud_Fraction(k))) THEN
+            maxcov_TL(k) = -self_TL%Cloud_Fraction(k-1)
+         ELSE
+            maxcov_TL(k) = -self_TL%Cloud_Fraction(k)
          ENDIF
-            prod_TL = prod_TL * cc_FWD%iVar%maxcov(k) / (one - cc_FWD%Cloud_Fraction(k-1)) +  &
-              & self_TL%Cloud_Fraction(k-1) * cc_FWD%iVar%prod(k-1) * cc_FWD%iVar%maxcov(k) / &
-              & (one - cc_FWD%Cloud_Fraction(k-1)) ** 2 + &
-              & maxcov_TL * cc_FWD%iVar%prod(k-1) / (one -  cc_FWD%Cloud_Fraction(k-1))
-         self_TL%Cloud_Cover(k) = -prod_TL
+         IF ( (cc_FWD%iVar%prod(k-1) == ZERO) .and. (ONE - cc_FWD%Cloud_Fraction(k-1) == ZERO) ) THEN 
+            prod_TL(k)  = maxcov_TL(k)
+         ELSE
+        !>>orig
+        !    prod_TL(k) = prod_TL(k-1) * cc_FWD%iVar%maxcov(k) / (one -
+        !    cc_FWD%Cloud_Fraction(k-1)) +  &
+        !                 self_TL%Cloud_Fraction(k-1) * cc_FWD%iVar%prod(k-1) *
+        !                 cc_FWD%iVar%maxcov(k) / &
+        !                 (one - cc_FWD%Cloud_Fraction(k-1))**2 + &
+        !                 maxcov_TL(k) * cc_FWD%iVar%prod(k-1) / (one -
+        !                 cc_FWD%Cloud_Fraction(k-1))
+        !<<orig
+            prod_TL(k) = prod_TL(k-1) * (cc_FWD%iVar%maxcov(k) / (one - cc_FWD%Cloud_Fraction(k-1))) +  &
+                         self_TL%Cloud_Fraction(k-1) * (cc_FWD%iVar%prod(k-1) / (one - cc_FWD%Cloud_Fraction(k-1))) * &
+                                                       (cc_FWD%iVar%maxcov(k) / (one - cc_FWD%Cloud_Fraction(k-1))) + &
+                         maxcov_TL(k) * (cc_FWD%iVar%prod(k-1) / (one - cc_FWD%Cloud_Fraction(k-1)))
+        ENDIF
+         self_TL%Cloud_Cover(k) = -prod_TL(k)
       ENDDO
       self_TL%Total_Cloud_Cover = self_TL%Cloud_Cover(n_layers)
     END SUBROUTINE Compute_MaxRan_Overlap_TL
@@ -958,7 +969,7 @@ CONTAINS
 !                   UNITS:      N/A
 !                   CLASS:      CRTM_CloudCover_type
 !                   DIMENSION:  Scalar
-!                   ATTRIBUTES: INTENT(IN OUT)
+!                   ATTRIBUTES: INTENT(INOUT)
 !
 ! INPUTS:
 !   cc_FWD:         The forward model cloud cover object.
@@ -984,7 +995,7 @@ CONTAINS
 !                   UNITS:      N/A
 !                   TYPE:       CRTM_Atmosphere_type
 !                   DIMENSION:  Scalar
-!                   ATTRIBUTES: INTENT(IN OUT)
+!                   ATTRIBUTES: INTENT(INOUT)
 !
 ! FUNCTION RESULT:
 !   err_stat:       The return value is an integer defining the error status.
@@ -1005,15 +1016,14 @@ CONTAINS
     atm_AD ) &  ! Output, but contains information on input
   RESULT(err_stat)
     ! Arguments
-    CLASS(CRTM_CloudCover_type), INTENT(IN OUT) :: self_AD
+    CLASS(CRTM_CloudCover_type), INTENT(INOUT) :: self_AD
     CLASS(CRTM_CloudCover_type), INTENT(IN)     :: cc_FWD
     TYPE(CRTM_Atmosphere_type) , INTENT(IN)     :: atm
-    TYPE(CRTM_Atmosphere_type) , INTENT(IN OUT) :: atm_AD
+    TYPE(CRTM_Atmosphere_type) , INTENT(INOUT) :: atm_AD
     ! Function result
     INTEGER :: err_stat
     ! Local parameters
     CHARACTER(*), PARAMETER :: PROCEDURE_NAME = 'CRTM_CloudCover_Define::Compute_CloudCover_AD'
-    REAL(fp),     PARAMETER :: MIN_COVERAGE_THRESHOLD = 1.0e-06_fp                           
     REAL(fp),     PARAMETER :: MAX_COVERAGE_THRESHOLD = ONE - MIN_COVERAGE_THRESHOLD
 
     ! Local variables
@@ -1021,7 +1031,7 @@ CONTAINS
     INTEGER :: n_layers
     INTEGER :: n_clouds
     INTEGER :: n      
-    REAL(fp):: sum_wc
+!!$    REAL(fp):: sum_wc
 
     ! Check inputs
     err_stat = SUCCESS
@@ -1055,13 +1065,13 @@ CONTAINS
     ! Add AD of cloud scaling here!
     ! Partition all hydrometeors into cloudy column
      IF (cc_FWD%Total_Cloud_Cover > MIN_COVERAGE_THRESHOLD) then
-
-       sum_wc = ZERO
-       DO n = 1, n_clouds
-          sum_wc = sum_wc  &
-                 + SUM(atm_AD%Cloud(n)%Water_Content(1:n_layers) * cc_FWD%iVar%wc(n,1:n_layers))
-       ENDDO
-       sum_wc = sum_wc / (cc_FWD%Total_Cloud_Cover**2)
+!!$
+!!$       sum_wc = ZERO
+!!$       DO n = 1, n_clouds
+!!$          sum_wc = sum_wc  &
+!!$                 + SUM(atm_AD%Cloud(n)%Water_Content(1:n_layers) * cc_FWD%iVar%wc(n,1:n_layers))
+!!$       ENDDO
+!!$       sum_wc = sum_wc / (cc_FWD%Total_Cloud_Cover**2)
 !>>test
 !      sum_wc = ZERO
 !      DO n = 1, n_clouds
@@ -1071,12 +1081,29 @@ CONTAINS
 !      ENDDO
 !<<test
 
-       self_AD%Total_Cloud_Cover = self_AD%Total_Cloud_Cover - sum_wc
+!      self_AD%Total_Cloud_Cover = self_AD%Total_Cloud_Cover - sum_wc
+!
+!       DO n = 1, n_clouds
+!         atm_AD%Cloud(n)%Water_Content(1:n_layers) = atm_AD%Cloud(n)%Water_Content(1:n_layers) &
+!                                          / cc_FWD%Total_Cloud_Cover
+!       ENDDO
 
+!>>test1
+       !** BTJ: this section of code comes from undocumented 2.3.1-beta release from Tong Zhu. 
+       !** the AD calculations for CloudCover need to be verified.  Previously it was the commented
+       !** section immediately above and the commented sum_wc lines several lines above.  
        DO n = 1, n_clouds
-         atm_AD%Cloud(n)%Water_Content(1:n_layers) = atm_AD%Cloud(n)%Water_Content(1:n_layers) &
-                                          / cc_FWD%Total_Cloud_Cover
+
+          self_AD%Total_Cloud_Cover = self_AD%Total_Cloud_Cover + &
+               SUM(-(atm_AD%Cloud(n)%Water_Content(1:n_layers) * cc_FWD%iVar%wc(n,1:n_layers)/ cc_FWD%Total_Cloud_Cover)) &
+                                                       / cc_FWD%Total_Cloud_Cover
+
+          atm_AD%Cloud(n)%Water_Content(1:n_layers) = atm_AD%Cloud(n)%Water_Content(1:n_layers) &
+                                           / cc_FWD%Total_Cloud_Cover
+
        ENDDO
+!<<test1
+
 
      END IF
 
@@ -1136,14 +1163,14 @@ CONTAINS
       DO k = n_layers, 1, -1
         prod_AD(k) = prod_AD(k) - self_AD%Cloud_Cover(k)
         self_AD%Cloud_Cover(k) = ZERO
-        if (cc_FWD%Cloud_Fraction(k) > MIN_COVERAGE_THRESHOLD) then    
+        IF (cc_FWD%Cloud_Fraction(k) > MIN_COVERAGE_THRESHOLD) THEN
            self_AD%Cloud_Fraction(k) = self_AD%Cloud_Fraction(k) - (cc_FWD%iVar%prod(k-1)*prod_AD(k))
            prod_AD(k-1) = prod_AD(k-1)+(ONE - cc_FWD%Cloud_Fraction(k))*prod_AD(k)
            prod_AD(k) = ZERO
-        else
+        ELSE
            prod_AD(k-1) = prod_AD(k-1)+ prod_AD(k)
            prod_AD(k) = ZERO 
-        endif
+        ENDIF
       END DO
       prod_AD(0) = ZERO
     END SUBROUTINE Compute_Random_Overlap_AD
@@ -1173,36 +1200,47 @@ CONTAINS
 !    END SUBROUTINE Compute_MaxRan_Overlap_AD
     SUBROUTINE Compute_MaxRan_Overlap_AD()
       INTEGER  :: k
-      REAL(fp) :: prod_AD
-      REAL(fp) :: maxcov_AD
-      prod_AD   = ZERO
-      maxcov_AD = ZERO
-      self_AD%Cloud_Cover(n_layers) = self_AD%Cloud_Cover(n_layers) + self_AD%Total_Cloud_Cover                                
-      self_AD%Total_Cloud_Cover = ZERO
+      REAL(fp) :: prod_AD(n_layers)
+      REAL(fp) :: maxcov_AD(n_layers)
+
+      prod_AD(:)   = ZERO
+      maxcov_AD(:) = ZERO
+      self_AD%Cloud_Cover(n_layers) = self_AD%Cloud_Cover(n_layers) + self_AD%Total_Cloud_Cover
+      self_AD%Total_Cloud_Cover     = ZERO
       DO k = n_layers, 2,  - 1
-        prod_AD = prod_AD - self_AD%Cloud_Cover(k)
+        prod_AD(k) = prod_AD(k) - self_AD%Cloud_Cover(k)
         self_AD%Cloud_Cover(k) = ZERO
-        self_AD%Cloud_Fraction(k-1) = self_AD%Cloud_Fraction(k-1) +      &
-                   & prod_AD * cc_FWD%iVar%prod(k-1) * cc_FWD%iVar%maxcov(k) / (one - cc_FWD%Cloud_Fraction(k-1)) ** 2
-        maxcov_AD                   =      &
-                   & maxcov_AD + prod_AD * cc_FWD%iVar%prod(k-1) / (one - cc_FWD%Cloud_Fraction(k-1))
-        prod_AD                     =      &
-                   & prod_AD  * cc_FWD%iVar%maxcov(k) / (one - cc_FWD%Cloud_Fraction(k-1))
-        IF ((cc_FWD%Cloud_Fraction(k-1) > cc_FWD%Cloud_Fraction(k))) THEN
-          self_AD%Cloud_Fraction(k-1) = self_AD%Cloud_Fraction(k-1) - maxcov_AD
-          maxcov_AD     = zero
-        ELSE IF ((cc_FWD%Cloud_Fraction(k-1) < cc_FWD%Cloud_Fraction(k))) THEN
-          self_AD%Cloud_Fraction(k) = self_AD%Cloud_Fraction(k) - maxcov_AD
-          maxcov_AD     = zero
-        ELSE IF ((cc_FWD%Cloud_Fraction(k-1) == cc_FWD%Cloud_Fraction(k))) THEN
-          self_AD%Cloud_Fraction(k) = self_AD%Cloud_Fraction(k) - maxcov_AD
-          maxcov_AD     = ZERO
+        IF ( (cc_FWD%iVar%prod(k-1) == ZERO) .and. (ONE - cc_FWD%Cloud_Fraction(k-1) == ZERO) ) THEN
+           maxcov_AD(k) = maxcov_AD(k) + prod_AD(k)
+        ELSE
+      !>>orig
+      !     prod_AD(k-1)                = prod_AD(k-1) + prod_AD(k) * cc_FWD%iVar%maxcov(k) / (one - cc_FWD%Cloud_Fraction(k-1))
+      !     self_AD%Cloud_Fraction(k-1) = self_AD%Cloud_Fraction(k-1) + prod_AD(k) * cc_FWD%iVar%prod(k-1) * cc_FWD%iVar%maxcov(k) &
+      !                                               / (one - cc_FWD%Cloud_Fraction(k-1))**2
+      !     maxcov_AD(k)                = maxcov_AD(k) + prod_AD(k) *
+      !     cc_FWD%iVar%prod(k-1) / (one - cc_FWD%Cloud_Fraction(k-1)) !<<orig
+           prod_AD(k-1)                = prod_AD(k-1) + prod_AD(k)  * (cc_FWD%iVar%maxcov(k) / &
+                                         (one - cc_FWD%Cloud_Fraction(k-1)))
+           self_AD%Cloud_Fraction(k-1) = self_AD%Cloud_Fraction(k-1) + prod_AD(k) * &
+                        (cc_FWD%iVar%prod(k-1)/(one - cc_FWD%Cloud_Fraction(k-1)))* &
+                        (cc_FWD%iVar%maxcov(k)/(one - cc_FWD%Cloud_Fraction(k-1)))
+           maxcov_AD(k)                = maxcov_AD(k) + prod_AD(k) * (cc_FWD%iVar%prod(k-1) / &
+                                         (one - cc_FWD%Cloud_Fraction(k-1)))
+        ENDIF
+        IF (     (cc_FWD%Cloud_Fraction(k-1) >  cc_FWD%Cloud_Fraction(k))) THEN
+          self_AD%Cloud_Fraction(k-1) = self_AD%Cloud_Fraction(k-1) - maxcov_AD(k)
+          maxcov_AD(k)     = zero
+        ELSE
+          self_AD%Cloud_Fraction(k) = self_AD%Cloud_Fraction(k) - maxcov_AD(k)
+          maxcov_AD(k)     = ZERO
         ENDIF
       ENDDO
-      prod_AD = prod_AD - maxcov_AD
+
+      prod_AD(1) = prod_AD(1) - self_AD%Cloud_Cover(1)
       self_AD%Cloud_Cover(1) = ZERO
-      self_AD%Cloud_Fraction(1) = self_AD%Cloud_Fraction(1) - prod_AD
-      prod_AD = ZERO
+      self_AD%Cloud_Fraction(1) = self_AD%Cloud_Fraction(1) - prod_AD(1) - maxcov_AD(1)
+      prod_AD(1) = ZERO
+      maxcov_AD(1) = ZERO
     END SUBROUTINE Compute_MaxRan_Overlap_AD
 
     SUBROUTINE Compute_Average_Overlap_AD()
@@ -1353,12 +1391,12 @@ CONTAINS
 !--------------------------------------------------------------------------------
 
   ELEMENTAL SUBROUTINE Destroy( self )
-    CLASS(CRTM_CloudCover_type), INTENT(OUT) :: self
+    CLASS(CRTM_CloudCover_type), INTENT(INOUT) :: self
     self%Is_Allocated = .FALSE.
   END SUBROUTINE Destroy
 
   ELEMENTAL SUBROUTINE iVar_Destroy( self )
-    CLASS(iVar_type), INTENT(OUT) :: self
+    CLASS(iVar_type), INTENT(INOUT) :: self
     self%Is_Allocated = .FALSE.
   END SUBROUTINE iVar_Destroy
 
@@ -1426,17 +1464,17 @@ CONTAINS
     Forward      , &
     Error_Message  )
     ! Arguments
-    CLASS(CRTM_CloudCover_type), INTENT(OUT) :: self
+    CLASS(CRTM_CloudCover_type), INTENT(INOUT) :: self
     INTEGER                    , INTENT(IN)  :: n_Layers
     INTEGER                    , INTENT(IN)  :: n_Clouds  
     LOGICAL,           OPTIONAL, INTENT(IN)  :: Forward
     CHARACTER(*),      OPTIONAL, INTENT(OUT) :: Error_Message
     ! Local variables
-    CHARACTER(ML) :: alloc_msg
     INTEGER :: alloc_stat
     LOGICAL :: allocate_ivar
 
 
+    if (present (Error_Message)) Error_Message = 'SUCCESS'
     ! Check input
     IF ( n_Layers < 1 ) THEN
       IF ( PRESENT(Error_Message) ) Error_Message = 'Invalid dimension inputs'
@@ -1448,24 +1486,31 @@ CONTAINS
 
     ! Intermediate variable object
     IF ( allocate_ivar ) THEN
-!     CALL self%iVar%Create(n_Layers, Error_Message = Error_Message)                  
       CALL self%iVar%Create(n_Layers, n_Clouds, Error_Message = Error_Message)       
+      if (Error_Message /= 'SUCCESS') return
       IF ( .NOT. self%iVar%Is_Usable() ) RETURN
     END IF
 
 
     ! Main object
-    ! ...Perform the allocations
-    ALLOCATE( self%Cloud_Fraction( n_Layers ), &
-              self%Cloud_Cover( n_Layers ), &
-              STAT = alloc_stat )
-             !STAT = alloc_stat, ERRMSG = alloc_msg )
-    IF ( alloc_stat /= 0 ) THEN
-      IF ( PRESENT(Error_Message) ) Error_Message = alloc_msg
-      RETURN
+    ! ...Perform the allocations if requested n_Layers does not equal existing n_Layers
+    !JR Must deallocate components in order for subsequent allocate to succeed
+    !JR Code modification is for MPAS test case for which n_Layers may differ across profiles
+    !JR and previous code failed
+    if (n_Layers /= self%n_Layers) then
+      if (allocated(self%Cloud_Fraction)) DEALLOCATE (self%Cloud_Fraction)
+      if (allocated(self%Cloud_Cover))    DEALLOCATE (self%Cloud_Cover)
+      
+      ALLOCATE( self%Cloud_Fraction( n_Layers ), &
+                self%Cloud_Cover( n_Layers ), &
+                STAT = alloc_stat )
+      IF ( alloc_stat /= 0 ) THEN
+        IF ( PRESENT(Error_Message) ) Error_Message = 'CloudCover_Define Create: allocate failure'
+        RETURN
+      END IF
+      self%n_Layers = n_Layers
     END IF
     ! ...Initialise
-    self%n_Layers = n_Layers
     self%Cloud_Fraction    = ZERO
     self%Cloud_Cover       = ZERO
     ! ...Set allocation indicator
@@ -1480,36 +1525,47 @@ CONTAINS
     n_Clouds     , &  
     Error_Message  )
     ! Arguments
-    CLASS(iVar_type)      , INTENT(OUT) :: self
+    CLASS(iVar_type)      , INTENT(INOUT) :: self
     INTEGER               , INTENT(IN)  :: n_Layers
     INTEGER               , INTENT(IN)  :: n_Clouds 
     CHARACTER(*), OPTIONAL, INTENT(OUT) :: Error_Message
     ! Local variables
-    CHARACTER(ML) :: alloc_msg
     INTEGER :: alloc_stat
 
+    if (present (Error_Message)) Error_Message = 'SUCCESS'
     ! Check input
     IF ( n_Layers < 1 ) THEN
       IF ( PRESENT(Error_Message) ) Error_Message = 'iVar: Invalid dimension input'
       RETURN
     END IF
 
-    ! Perform the allocations
-    ALLOCATE( self%prod( 0:n_Layers ), &
-              self%lwc( 1:n_Layers ), &
-              self%wc_sum( 0:n_Layers ), &
-              self%wc( 1:n_Clouds, 1:n_Layers ), & 
-              self%maxcov( 1:n_Layers ), & 
-              self%cwc_sum( 0:n_Layers ), &
-              STAT = alloc_stat )
-             !STAT = alloc_stat, ERRMSG = alloc_msg )
-    IF ( alloc_stat /= 0 ) THEN
-      IF ( PRESENT(Error_Message) ) Error_Message = 'iVar: '//TRIM(alloc_msg)
-      RETURN
+    ! Perform the allocations if requested n_Layers does not equal requested n_Layers
+    !JR Must deallocate components in order for subsequent allocate to succeed
+    !JR Code modification is for MPAS test case for which n_Layers may differ across profiles
+    !JR and previous code failed
+    if (n_Layers /= self%n_Layers) then
+      if (ALLOCATED(self%prod))    DEALLOCATE (self%prod)
+      if (ALLOCATED(self%lwc))     DEALLOCATE (self%lwc)
+      if (ALLOCATED(self%wc_sum))  DEALLOCATE (self%wc_sum)
+      if (ALLOCATED(self%wc))      DEALLOCATE (self%wc)
+      if (ALLOCATED(self%maxcov))  DEALLOCATE (self%maxcov)
+      if (ALLOCATED(self%cwc_sum)) DEALLOCATE (self%cwc_sum)
+      ALLOCATE( self%prod( 0:n_Layers ), &
+                self%lwc( 1:n_Layers ), &
+                self%wc_sum( 0:n_Layers ), &
+                self%wc( 1:n_Clouds, 1:n_Layers ), & 
+                self%maxcov( 1:n_Layers ), & 
+                self%cwc_sum( 0:n_Layers ), &
+                STAT = alloc_stat )
+      IF ( alloc_stat /= 0 ) THEN
+        IF ( PRESENT(Error_Message) ) then
+          Error_Message = 'CloudCover_Define ivar_Create: allocate failure'
+        END IF
+        RETURN
+      END IF
+      self%n_Layers = n_Layers
     END IF
-    
-    ! Initialise
-    self%n_Layers = n_Layers
+      ! Initialise
     self%n_Clouds = n_Clouds  
     self%prod    = ZERO
     self%lwc     = ZERO
@@ -1546,7 +1602,7 @@ CONTAINS
 ! OPTIONAL INPUTS:
 !   Hires:   Set this logical argument to output object contents with
 !            more significant digits.
-!            If == .FALSE., output format is 'es13.6' [DEFAULT].
+!            If == .FALSE., output format is 'es22.15' [DEFAULT].
 !               == .TRUE.,  output format is 'es22.15'
 !            If not specified, default is .FALSE.
 !            UNITS:      N/A
@@ -1588,7 +1644,7 @@ CONTAINS
     LOGICAL :: verbose_inspect
 
     ! Setup
-    fmtstring = 'es13.6'
+    fmtstring = 'es22.15'
     IF ( PRESENT(Hires) ) THEN
       IF ( Hires ) fmtstring = 'es22.15'
     END IF
@@ -1626,7 +1682,7 @@ CONTAINS
     CHARACTER(20) :: fmtstring
 
     ! Setup
-    fmtstring = 'es13.6'
+    fmtstring = 'es22.15'
     IF ( PRESENT(Hires) ) THEN
       IF ( Hires ) fmtstring = 'es22.15'
     END IF
@@ -1668,7 +1724,7 @@ CONTAINS
 !            UNITS:      N/A
 !            CLASS:      CRTM_CloudCover_type
 !            DIMENSION:  Scalar or any rank
-!            ATTRIBUTES: INTENT(IN OUT)
+!            ATTRIBUTES: INTENT(INOUT)
 !
 ! COMMENTS:
 !   - The dimension components of the object are *NOT* set to zero.
@@ -1678,7 +1734,7 @@ CONTAINS
 !--------------------------------------------------------------------------------
 
   ELEMENTAL SUBROUTINE Set_To_Zero( self )
-    CLASS(CRTM_CloudCover_type), INTENT(IN OUT) :: self
+    CLASS(CRTM_CloudCover_type), INTENT(INOUT) :: self
     ! Do nothing if structure is unused
     IF ( .NOT. self%Is_Usable() ) RETURN
     ! Only zero out the data
@@ -1692,7 +1748,7 @@ CONTAINS
 
 
   ELEMENTAL SUBROUTINE iVar_Set_To_Zero( self )
-    CLASS(iVar_type), INTENT(IN OUT) :: self
+    CLASS(iVar_type), INTENT(INOUT) :: self
     ! Do nothing if structure is unused
     IF ( .NOT. self%Is_Usable() ) RETURN
     ! Only zero out the data
