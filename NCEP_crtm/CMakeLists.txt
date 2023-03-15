@@ -1,12 +1,5 @@
 esma_set_this ()
 
-# no idea why this is not a Fortran file?
-#add_custom_command (
-#  OUTPUT CRTM_Module.F90
-#  COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/CRTM_Module.fpp CRTM_Module.F90
-#  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-#  )
-
 set (SRCS
   ACCoeff_Binary_IO.f90
   ACCoeff_Define.f90
@@ -184,7 +177,11 @@ set (SRCS
 )
 
 if (CMAKE_Fortran_COMPILER_ID MATCHES Intel)
-   set (CMAKE_Fortran_FLAGS_RELEASE "-free ${FOPT2} ${LITTLE_ENDIAN} ${BYTERECLEN}")
+  set (CMAKE_Fortran_FLAGS_RELEASE "-free ${FOPT2} ${LITTLE_ENDIAN} ${BYTERECLEN}")
+  if (CMAKE_BUILD_TYPE MATCHES Debug)
+    message(WARNING "Intel Compiler and our debugging flags have issues with ADA_Module.f90. So for now we turn off checking compiling ADA_Module.f90")
+    set_source_files_properties(ADA_Module.f90 PROPERTIES COMPILE_OPTIONS -nocheck)
+  endif ()
 endif ()
 
 
