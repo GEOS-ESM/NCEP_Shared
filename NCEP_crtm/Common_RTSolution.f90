@@ -19,8 +19,7 @@ MODULE Common_RTSolution
   USE CRTM_Parameters,           ONLY: ONE, ZERO, PI, &
                                        DEGREES_TO_RADIANS, &
                                        SECANT_DIFFUSIVITY, &
-                                       SCATTERING_ALBEDO_THRESHOLD, &
-                                       RT_ADA, RT_SOI, RT_P2S, RT_EDD
+                                       SCATTERING_ALBEDO_THRESHOLD
   USE Message_Handler,           ONLY: SUCCESS, Display_Message
   USE CRTM_Atmosphere_Define,    ONLY: CRTM_Atmosphere_type
   USE CRTM_Surface_Define,       ONLY: CRTM_Surface_type
@@ -55,14 +54,7 @@ MODULE Common_RTSolution
   PUBLIC :: Assign_Common_Output_TL
   PUBLIC :: Assign_Common_Input_AD
   PUBLIC :: Assign_Common_Output_AD
-  
-  ! -----------------
-  ! Module parameters
-  ! -----------------
-  ! Version Id for the module
-  CHARACTER(*), PARAMETER :: MODULE_VERSION_ID = &
-  '$Id$'
-  
+    
 CONTAINS
 
 !################################################################################
@@ -1119,22 +1111,14 @@ CONTAINS
     
     Error_Status = SUCCESS
     
-    ! ADA, SOI, P2S and EDD specific assignments
+    ! ADA and SOI specific assignments
     IF( RTV%Scattering_RT ) THEN
       
       ! Assign radiance output from ADA or SOI
       IF ( RTV%aircraft%rt ) THEN
-        IF ( RTV%RT_Algorithm_Id .EQ. RT_ADA .OR. RTV%RT_Algorithm_Id  .EQ. RT_SOI ) THEN 
-          Radiance = RTV%s_Level_Rad_UP(SfcOptics%Index_Sat_Ang, RTV%aircraft%idx)
-        ELSE
-          Radiance = RTV%s_Rad_UP
-        END IF
+        Radiance = RTV%s_Level_Rad_UP(SfcOptics%Index_Sat_Ang, RTV%aircraft%idx)
       ELSE
-        IF ( RTV%RT_Algorithm_Id .EQ. RT_ADA .OR. RTV%RT_Algorithm_Id  .EQ. RT_SOI ) THEN 
-          Radiance = RTV%s_Level_Rad_UP(SfcOptics%Index_Sat_Ang, 0)
-        ELSE
-          Radiance = RTV%s_Rad_UP
-        END IF
+        Radiance = RTV%s_Level_Rad_UP(SfcOptics%Index_Sat_Ang, 0)
       END IF
     
     ! Emission specific assignments
@@ -1624,32 +1608,37 @@ CONTAINS
     ! CRTM_Compute_SfcOptics_AD, the total sensitivity of the emissivity is taken into
     ! account for here.
     ! --------------------------------------------------------------------------------
-    IF( RTV%Scattering_RT ) THEN
-      User_Emissivity_AD = ZERO
-      IF( RTV%Diffuse_Surface) THEN
-        DO i = nZ, 1, -1
-          User_Emissivity_AD = User_Emissivity_AD - &
-            (SUM(SfcOptics_AD%Reflectivity(1:nZ,1,i,1))*SfcOptics%Weight(i))
-        END DO
-      ELSE ! Specular surface
-        DO i = nZ, 1, -1
-          User_Emissivity_AD = User_Emissivity_AD - SfcOptics_AD%Reflectivity(i,1,i,1)
-        END DO
-      END IF
-!      Direct_Reflectivity_AD = SUM(SfcOptics_AD%Direct_Reflectivity(1:nZ,1))
-!      SfcOptics_AD%Direct_Reflectivity(1,1) = SfcOptics_AD%Direct_Reflectivity(1,1) +
-!                                              (Direct_Reflectivity_AD/PI)
-      RTSolution_AD%Surface_Emissivity = User_Emissivity_AD
-    ELSE
-      RTSolution_AD%Surface_Emissivity = SfcOptics_AD%Emissivity(SfcOptics_AD%Index_Sat_Ang,1) - &
+    IF ( .NOT. SfcOptics%Compute ) THEN
+
+       IF( RTV%Scattering_RT ) THEN
+         User_Emissivity_AD = ZERO
+         IF( RTV%Diffuse_Surface) THEN
+           DO i = nZ, 1, -1
+             User_Emissivity_AD = User_Emissivity_AD - &
+               (SUM(SfcOptics_AD%Reflectivity(1:nZ,1,i,1))*SfcOptics%Weight(i))
+           END DO
+         ELSE ! Specular surface
+           DO i = nZ, 1, -1
+            User_Emissivity_AD = User_Emissivity_AD - SfcOptics_AD%Reflectivity(i,1,i,1)
+           END DO
+         END IF
+         !      Direct_Reflectivity_AD = SUM(SfcOptics_AD%Direct_Reflectivity(1:nZ,1))
+         !      SfcOptics_AD%Direct_Reflectivity(1,1) = SfcOptics_AD%Direct_Reflectivity(1,1) +
+         !                                              (Direct_Reflectivity_AD/PI)
+         RTSolution_AD%Surface_Emissivity = User_Emissivity_AD
+       ELSE
+         RTSolution_AD%Surface_Emissivity = SfcOptics_AD%Emissivity(SfcOptics_AD%Index_Sat_Ang,1) - &
                                          SfcOptics_AD%Reflectivity(1,1,1,1)
-    END IF
+       END IF
+
+    ELSE 
 
     ! -----------------------------------------
     ! Populate the SfcOptics_AD structure based
     ! on FORWARD model SfcOptics Compute_Switch
     ! -----------------------------------------
-    IF ( SfcOptics%Compute ) THEN
+      RTSolution_AD%Surface_Emissivity = SfcOptics_AD%Emissivity(SfcOptics_AD%Index_Sat_Ang,1) 
+
       Error_Status = CRTM_Compute_SfcOptics_AD( &
                        Surface     , & ! Input
                        SfcOptics   , & ! Input

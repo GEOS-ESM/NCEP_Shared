@@ -243,14 +243,13 @@ MODULE CRTM_Parameters
   !#----------------------------------------------------------------------------#
   INTEGER, PUBLIC, PARAMETER :: RT_ADA = 56
   INTEGER, PUBLIC, PARAMETER :: RT_SOI = 168
-  INTEGER, PUBLIC, PARAMETER :: RT_P2S = 280
-  INTEGER, PUBLIC, PARAMETER :: RT_EDD = 392
   
   INTEGER, PUBLIC, PARAMETER :: MAX_N_CLOUDS   = 4 ! Max. number of clouds/profile. Needed for CSV...
   INTEGER, PUBLIC, PARAMETER :: MAX_N_AEROSOLS = 20 ! Max. number of aerosols/profile. Needed for ASV
   
   REAL(fp), PUBLIC, PARAMETER :: AEROSOL_CONTENT_THRESHOLD = 0.000000001_fp
   REAL(fp), PUBLIC, PARAMETER :: WATER_CONTENT_THRESHOLD = 0.000001_fp
+  REAL(fp), PUBLIC, PARAMETER :: MIN_COVERAGE_THRESHOLD = 1.0e-12_fp
   REAL(fp), PUBLIC, PARAMETER :: OPTICAL_DEPTH_THRESHOLD = 0.000001_fp
 
   REAL(fp), PUBLIC, PARAMETER :: BS_THRESHOLD  = 1.0e-10_fp  ! Was SCATTERING_ALBEDO_THRESHOLD
@@ -275,7 +274,21 @@ MODULE CRTM_Parameters
   !#----------------------------------------------------------------------------#
   REAL(fp), PUBLIC, PARAMETER :: AIRCRAFT_PRESSURE_THRESHOLD = 0.1_fp
   
-  
+ 
+  !#----------------------------------------------------------------------------#
+  !#            -- GOCART Aerosol Parameters                      --            #
+  !#----------------------------------------------------------------------------#
+  INTEGER, PUBLIC, PARAMETER ::        INVALID_AEROSOL = 0
+  INTEGER, PUBLIC, PARAMETER ::           DUST_AEROSOL = 1
+  INTEGER, PUBLIC, PARAMETER ::   SEASALT_SSAM_AEROSOL = 2
+  INTEGER, PUBLIC, PARAMETER ::  SEASALT_SSCM1_AEROSOL = 3
+  INTEGER, PUBLIC, PARAMETER ::  SEASALT_SSCM2_AEROSOL = 4
+  INTEGER, PUBLIC, PARAMETER ::  SEASALT_SSCM3_AEROSOL = 5
+  INTEGER, PUBLIC, PARAMETER :: ORGANIC_CARBON_AEROSOL = 6
+  INTEGER, PUBLIC, PARAMETER ::   BLACK_CARBON_AEROSOL = 7
+  INTEGER, PUBLIC, PARAMETER ::        SULFATE_AEROSOL = 8
+
+
 CONTAINS
 
 

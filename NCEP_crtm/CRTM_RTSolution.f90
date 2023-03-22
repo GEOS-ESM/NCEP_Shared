@@ -20,18 +20,14 @@ MODULE CRTM_RTSolution
   USE Message_Handler         , ONLY: SUCCESS, FAILURE, Display_Message
   USE CRTM_Parameters         , ONLY: ZERO, ONE, TWO, PI, &
                                       MAX_N_ANGLES, &
-                                      MAX_N_LAYERS, &
-                                      RT_ADA, RT_SOI, RT_P2S, RT_EDD
+                                      RT_ADA, RT_SOI
   USE Common_RTSolution       , ONLY: Assign_Common_Input, &
                                       Assign_Common_Output, &
                                       Assign_Common_Input_TL, &
                                       Assign_Common_Output_TL, &
                                       Assign_Common_Input_AD, &
                                       Assign_Common_Output_AD
-  USE CRTM_SpcCoeff           , ONLY: SC                         , &
-                                      SpcCoeff_IsMicrowaveSensor , & 
-                                      SpcCoeff_IsInfraredSensor  , & 
-                                      SpcCoeff_IsVisibleSensor
+  USE CRTM_SpcCoeff           , ONLY: SC
   USE CRTM_Atmosphere_Define  , ONLY: CRTM_Atmosphere_type
   USE CRTM_Surface_Define     , ONLY: CRTM_Surface_type
   USE CRTM_GeometryInfo_Define, ONLY: CRTM_GeometryInfo_type
@@ -43,8 +39,6 @@ MODULE CRTM_RTSolution
   ! RT modules
   USE SOI_Module
   USE ADA_Module
-  USE P2S_Module
-  USE EDD_Module
   USE Emission_Module
   ! Disable all implicit typing
   IMPLICIT NONE
@@ -65,15 +59,7 @@ MODULE CRTM_RTSolution
   PUBLIC :: CRTM_Compute_RTSolution_TL
   PUBLIC :: CRTM_Compute_RTSolution_AD
   PUBLIC :: CRTM_Compute_nStreams
-  PUBLIC :: CRTM_Compute_ScatIndicator
-  PUBLIC :: CRTM_RTSolution_Version
 
-  ! -----------------
-  ! Module parameters
-  ! -----------------
-  ! Version Id for the module
-  CHARACTER(*),  PARAMETER :: MODULE_VERSION_ID = &
-  '$Id$'
 
 CONTAINS
 
@@ -284,33 +270,6 @@ CONTAINS
                  SfcOptics%Emissivity( 1:nZ, 1 )           , & ! Input, surface emissivity
                  SfcOptics%Reflectivity( 1:nZ, 1, 1:nZ, 1 ), & ! Input, surface reflectivity
                  SfcOptics%Index_Sat_Ang                   , & ! Input, Satellite angle index
-                 RTV                                         ) ! Output, Internal variables
-        CASE (RT_P2S) ;
-          RTSolution%RT_Algorithm_Name = 'P2S'
-          ! Polarized 2-stream RT solver
-          CALL CRTM_P2S ( &
-                 Atmosphere%n_Layers                       , & ! Input, Number of atmospheric layers
-                 AtmOptics%Single_scatter_albedo           , & ! Input, Layer single scattering albedo
-                 AtmOptics%Asymmetry_Factor                , & ! Input, Layer asymmetry parameter
-                 AtmOptics%Optical_Depth                   , & ! Input, Layer optical depth
-                 RTV%cosmic_Background_Radiance            , & ! Input, Cosmic background radiation
-                 SfcOptics%Emissivity( 1:nZ, 1 )           , & ! Input, Surface emissivity
-                 SfcOptics%Reflectivity( 1:nZ, 1, 1:nZ, 1 ), & ! Input, surface reflectivity
-                 SfcOptics%Index_Sat_Ang                   , & ! Input, Satellite angle index 
-                 RTV                                         ) ! Output, Internal variables
-        CASE (RT_EDD) ;
-          RTSolution%RT_Algorithm_Name = 'EDD'
-          ! Delta-Eddington RT solver
-          CALL CRTM_EDD ( &
-                 Atmosphere%n_Layers                       , & ! Input, Number of atmospheric layers
-                 AtmOptics%Single_scatter_albedo           , & ! Input, Layer single scattering albedo
-                 AtmOptics%Asymmetry_Factor                , & ! Input, Layer asymmetry parameter
-                 AtmOptics%Optical_Depth                   , & ! Input, Layer optical depth
-                 RTV%cosmic_Background_Radiance            , & ! Input, Cosmic background radiation
-                 SfcOptics%Emissivity( 1:nZ, 1 )           , & ! Input, Surface emissivity
-                 SfcOptics%Reflectivity( 1:nZ, 1, 1:nZ, 1 ), & ! Input, surface reflectivity
-                 SfcOptics%Index_Sat_Ang                   , & ! Input, Satellite angle index 
-                 Atmosphere                                , & ! Input, Atmospheric profiles
                  RTV                                         ) ! Output, Internal variables
       END SELECT
 
@@ -1018,8 +977,6 @@ CONTAINS
 !
 ! CALLING SEQUENCE:
 !       nStreams = CRTM_Compute_n_Streams( Atmosphere,   &  ! Input
-!                                          AtmOptics,    &  ! Input
-!                                          GeometryInfo, &  ! Input
 !                                          SensorIndex,  &  ! Input
 !                                          ChannelIndex, &  ! Input
 !                                          RTSolution    )  ! Output
@@ -1028,20 +985,6 @@ CONTAINS
 !       Atmosphere:     Structure containing the atmospheric state data.
 !                       UNITS:      N/A
 !                       TYPE:       CRTM_Atmosphere_type
-!                       DIMENSION:  Scalar
-!                       ATTRIBUTES: INTENT(IN)
-!
-!       AtmOptics:      Structure containing the combined atmospheric
-!                       optical properties for gaseous absorption, clouds,
-!                       and aerosols.
-!                       UNITS:      N/A
-!                       TYPE:       CRTM_AtmOptics_type
-!                       DIMENSION:  Scalar
-!                       ATTRIBUTES: INTENT(IN)
-!
-!       GeometryInfo:   Structure containing the view geometry data.
-!                       UNITS:      N/A
-!                       TYPE:       CRTM_GeometryInfo_type
 !                       DIMENSION:  Scalar
 !                       ATTRIBUTES: INTENT(IN)
 !
@@ -1083,19 +1026,15 @@ CONTAINS
 
   FUNCTION CRTM_Compute_nStreams( &
     Atmosphere  , &  ! Input
-    AtmOptics   , &  ! Input
-    GeometryInfo, &  ! Input
     SensorIndex , &  ! Input
     ChannelIndex, &  ! Input
     RTSolution  ) &  ! Output
   RESULT( nStreams )
     ! Arguments
-    TYPE(CRTM_Atmosphere_type),  INTENT(IN)     :: Atmosphere
-    TYPE(CRTM_AtmOptics_type),   INTENT(IN)     :: AtmOptics
-    TYPE(CRTM_GeometryInfo_type),INTENT(IN)     :: GeometryInfo
-    INTEGER,                     INTENT(IN)     :: SensorIndex
-    INTEGER,                     INTENT(IN)     :: ChannelIndex
-    TYPE(CRTM_RTSolution_type),  INTENT(IN OUT) :: RTSolution
+    TYPE(CRTM_Atmosphere_type), INTENT(IN)     :: Atmosphere
+    INTEGER,                    INTENT(IN)     :: SensorIndex
+    INTEGER,                    INTENT(IN)     :: ChannelIndex
+    TYPE(CRTM_RTSolution_type), INTENT(IN OUT) :: RTSolution
     ! Function result
     INTEGER :: nStreams
     ! Local variables
@@ -1111,205 +1050,35 @@ CONTAINS
     IF ( Atmosphere%n_Clouds   == 0 .AND. &
          Atmosphere%n_Aerosols == 0       ) RETURN
 
-!---------------------------------------------------------------
-!   Microwave wavelengths - Based on new scattering indicator
-!---------------------------------------------------------------
-    IF ( SpcCoeff_IsMicrowaveSensor(SC(SensorIndex)) .AND. &
-           AtmOptics%Scattering_Indicator ) THEN
+    ! Determine the maximum cloud particle size
+    maxReff = ZERO
+    DO n = 1, Atmosphere%n_Clouds
+      Reff = MAXVAL(Atmosphere%Cloud(n)%Effective_Radius)
+      IF( Reff > maxReff) maxReff = Reff
+    END DO
+    DO n = 1, Atmosphere%n_Aerosols
+      Reff = MAXVAL(Atmosphere%Aerosol(n)%Effective_Radius)
+      IF( Reff > maxReff) maxReff = Reff
+    END DO
 
-      CALL CRTM_Compute_ScatIndicator( Atmosphere,   & ! Input
-                                       GeometryInfo, & ! Input
-                                       AtmOptics,    & ! Input
-                                       RTSolution%ScatInd ) ! Output
+    ! Compute the Mie parameter, 2.pi.Reff/lambda
+    MieParameter = TWO * PI * maxReff * SC(SensorIndex)%Wavenumber(ChannelIndex)/10000.0_fp
 
-      ! Determine the number of streams based on the scattering indicator (assuming a target accuracy of 0.5 K)
-      IF ( RTSolution%ScatInd < 1.25_fp ) THEN
-        nStreams = 0
-      ELSE IF( RTSolution%ScatInd < 2.07_fp ) THEN
-        nStreams = 2
-      ELSE IF( RTSolution%ScatInd < 5.71_fp ) THEN
-        nStreams = 4
-      ELSE
-        nStreams = 6
-      END IF
-
-!---------------------------------------------------------------------------------------------
-!   IR and visible wavelengths - Use old version of calculator based on Mie size parameter 
-!---------------------------------------------------------------------------------------------
-    ELSE IF ( SpcCoeff_IsInfraredSensor(SC(SensorIndex)) .OR. &
-              SpcCoeff_IsVisibleSensor(SC(SensorIndex)) .OR. &
-              .NOT. AtmOptics%Scattering_Indicator) THEN
-      ! Determine the maximum cloud particle size
-      maxReff = ZERO
-      DO n = 1, Atmosphere%n_Clouds
-        Reff = MAXVAL(Atmosphere%Cloud(n)%Effective_Radius)
-        IF( Reff > maxReff) maxReff = Reff
-      END DO
-      DO n = 1, Atmosphere%n_Aerosols
-        Reff = MAXVAL(Atmosphere%Aerosol(n)%Effective_Radius)
-        IF( Reff > maxReff) maxReff = Reff
-      END DO
-
-      ! Compute the Mie parameter, 2.pi.Reff/lambda
-      MieParameter = TWO * PI * maxReff * SC(SensorIndex)%Wavenumber(ChannelIndex)/10000.0_fp
-    
-      ! Determine the number of streams based on Mie parameter
-      IF ( MieParameter < 0.01_fp ) THEN
-        nStreams = 2
-      ELSE IF( MieParameter < ONE ) THEN
-        nStreams = 4
-      ELSE
-        nStreams = 6
-      END IF
+    ! Determine the number of streams based on Mie parameter
+    IF ( MieParameter < 0.01_fp ) THEN
+      nStreams = 2
+    ELSE IF( MieParameter < ONE ) THEN
+      nStreams = 4
     ELSE
-      RETURN  ! Unknown sensor
+      nStreams = 6
     END IF
+
+! Hardcode number of streams for testing purposes
+!    nStreams = 6
 
     ! Set RTSolution scattering info
-    IF ( nStreams > 0 ) THEN
-      RTSolution%Scattering_Flag = .TRUE.
-      RTSolution%n_full_Streams  = nStreams + 2
-    END IF    
+    RTSolution%Scattering_Flag = .TRUE.
+    RTSolution%n_full_Streams  = nStreams + 2
 
   END FUNCTION CRTM_Compute_nStreams
-
-!--------------------------------------------------------------------------------
-!
-! NAME:
-!       CRTM_Compute_ScatIndicator
-!
-! PURPOSE:
-!       Routine to compute the scattering indicators
-!
-! CALLING SEQUENCE:
-!       CALL CRTM_Compute_ScatIndicator( Atm,          & ! Input
-!                                        GeometryInfo, & ! Input
-!                                        CScat,        & ! Input
-!                                        ScatInd )       ! Output
-!
-! INPUT ARGUMENTS:
-!              Atm:     Structure containing the atmospheric state data.
-!                       UNITS:      N/A
-!                       TYPE:       CRTM_Atmosphere_type
-!                       DIMENSION:  Scalar
-!                       ATTRIBUTES: INTENT(IN)
-!
-!       GeometryInfo:   Structure containing the view geometry data.
-!                       UNITS:      N/A
-!                       TYPE:       CRTM_GeometryInfo_type
-!                       DIMENSION:  Scalar
-!                       ATTRIBUTES: INTENT(IN)
-!
-!              CScat:   Structure containing the combined atmospheric
-!                       optical properties for gaseous absorption, clouds,
-!                       and aerosols.
-!                       UNITS:      N/A
-!                       TYPE:       CRTM_AtmOptics_type
-!                       DIMENSION:  Scalar
-!                       ATTRIBUTES: INTENT(IN)
-!
-!
-! OUPUT ARGUMENTS:
-!           ScatInd:    The value for the scattering indicator
-!                       UNITS:      N/A
-!                       TYPE:       REAL
-!                       DIMENSION:  Scalar
-!
-!--------------------------------------------------------------------------------
-
-  SUBROUTINE CRTM_Compute_ScatIndicator( Atm,          & ! Input
-                                         GeometryInfo, & ! Input
-                                         CScat,        & ! Input
-                                         ScatInd )       ! Output
-!--------------------------------------------------------------------------------------------
-! Computes a scattering indicator based on orders of scatter (Stephens 1994)
-!
-! Written by Tom Greenwald UW/CIMSS, tomg@ssec.wisc.edu
-!---------------------------------------------------------------------------------------------
-
-    TYPE(CRTM_Atmosphere_type),  INTENT( IN ) :: Atm
-    TYPE(CRTM_GeometryInfo_type),INTENT( IN ) :: GeometryInfo
-    TYPE(CRTM_AtmOptics_type) ,  INTENT( IN ) :: CScat
-    REAL(fp),                    INTENT( OUT ) :: ScatInd
-
-    REAL(fp), PARAMETER :: acc = 0.001 ! Accuracy of solution (x100%)
-    REAL(fp), PARAMETER :: emiss = 0.5 ! Reference surface emissivity
-    INTEGER :: nlayers, i, n
-    REAL(fp) :: opda, opda_gas, ssalb_eff, eta, num_ssalb
-    REAL(fp) :: opd_tot, trlay, trans1, trans2, factor, dp, dtdp
-    REAL(fp) :: wgts_sum, trans_tot, wgt_fnc( MAX_N_LAYERS )
-
-    nlayers = SIZE( CScat%Optical_Depth )
-
-    !--------------------------------------------
-    !  Compute transmittance weighting function
-    !--------------------------------------------
-    opd_tot = ZERO
-    DO i = 1, nlayers
-      opd_tot = opd_tot + CScat%Optical_Depth( i )
-    END DO
-
-    trans_tot = EXP( -opd_tot * GeometryInfo%Secant_Sensor_Zenith )
-    trans1 = ONE
-    DO i = 1, nlayers
-      trlay = EXP(-CScat%Optical_Depth( i ) * GeometryInfo%Secant_Sensor_Zenith )
-      trans2 = trans1 * trlay
-      IF (trans2 < TINY(acc)) THEN
-        factor = ONE
-      ELSE
-        factor = ONE + ( ONE - emiss ) * ( trans_tot / trans2 ) ** 2
-      END IF
-      dp = Atm%level_pressure( i ) - Atm%level_pressure( i - 1 )
-      dtdp = ( trans1 - trans2 ) / dp
-      wgt_fnc( i ) = factor * dtdp
-      trans1 = trans2
-    END DO
-
-    num_ssalb = ZERO
-    wgts_sum = ZERO
-    ! Weight layer single-scatter albedos by transmittance weighting function
-    DO i = 1, nlayers
-      wgts_sum = wgts_sum + wgt_fnc(i) 
-      IF (CScat%Optical_Depth(i) < TINY(acc)) CYCLE
-      num_ssalb = num_ssalb + wgt_fnc(i) * CScat%Single_Scatter_Albedo(i) / CScat%Optical_Depth(i)
-    END DO
-    ! Stephens, G. L., 1994: Remote sensing of the lower atmosphere, Oxford University Press, New York
-    ssalb_eff = ZERO
-    IF (wgts_sum > TINY(acc)) ssalb_eff = num_ssalb / wgts_sum
-    ScatInd = ZERO
-    IF (ssalb_eff > ZERO) THEN
-      eta = ONE - EXP( -opd_tot * GeometryInfo%Secant_Sensor_Zenith )
-      ScatInd = (LOG(acc) + LOG(ONE - eta * ssalb_eff)) / LOG(eta*ssalb_eff)
-    END IF
-
-  END SUBROUTINE CRTM_Compute_ScatIndicator
-
-!--------------------------------------------------------------------------------
-!:sdoc+:
-!
-! NAME:
-!       CRTM_RTSolution_Version
-!
-! PURPOSE:
-!       Subroutine to return the module version information.
-!
-! CALLING SEQUENCE:
-!       CALL CRTM_RTSolution_Version( Id )
-!
-! OUTPUT ARGUMENTS:
-!       Id:            Character string containing the version Id information
-!                      for the module.
-!                      UNITS:      N/A
-!                      TYPE:       CHARACTER(*)
-!                      DIMENSION:  Scalar
-!                      ATTRIBUTES: INTENT(OUT)
-!
-!:sdoc-:
-!--------------------------------------------------------------------------------
-
-  SUBROUTINE CRTM_RTSolution_Version( Id )
-    CHARACTER(*), INTENT(OUT) :: Id
-    Id = MODULE_VERSION_ID
-  END SUBROUTINE CRTM_RTSolution_Version
-
 END MODULE CRTM_RTSolution
