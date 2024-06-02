@@ -374,17 +374,9 @@ if (INTEGER_KIND STREQUAL "i8")
   target_compile_definitions (${this} PRIVATE -DF77_INTSIZE_8)
 endif()
 
-
-if (CMAKE_C_COMPILER_ID MATCHES Intel)
-    target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:STATIC_ALLOCATION>)
-elseif (CMAKE_C_COMPILER_ID MATCHES "GNU")
-    target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:DYNAMIC_ALLOCATION>)
-endif ()
+target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:DYNAMIC_ALLOCATION>)
 target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:MAXNC=600>)
 target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:MXNAF=3>)
 target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:C>:UNDERSCORE>)
 
-if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-   target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:DYNAMIC_ALLOCATION>)
-endif ()
-
+target_compile_definitions (${this} PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:DYNAMIC_ALLOCATION>)
