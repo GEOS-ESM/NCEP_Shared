@@ -27,7 +27,7 @@ set (srcs
    chrtrn.f
    chrtrna.f
    cktaba.f
-   closbf.f
+   closbf.F
    closmg.f
    cmpia.c
    cmpmsg.f
@@ -63,7 +63,7 @@ set (srcs
    dxmini.f
    elemdx.f
    errwrt.f
-   exitbufr.F
+   exitbufr.f
    fstag.f
    getabdb.f
    getbmiss.f
