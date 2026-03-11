@@ -27,7 +27,7 @@ C   MACHINE: IBM SP
 C
 C$$$
       INTEGER IRET
-      INTEGER(4) JRET
+      INTEGER JRET
       JRET=IRET
-      CALL exit(JRET)
+      stop JRET
       END
