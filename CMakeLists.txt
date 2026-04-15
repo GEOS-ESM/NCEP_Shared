@@ -1,5 +1,10 @@
 esma_check_if_debug()
 
+# === NCEP legacy Fortran codes need -std=legacy (gfortran) ===
+if (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+    string(APPEND CMAKE_Fortran_FLAGS "-ffree-line-length-none -fd-lines-as-comments")
+endif()
+
 esma_add_subdirectories(
   NCEP_crtm
   NCEP_sfcio
