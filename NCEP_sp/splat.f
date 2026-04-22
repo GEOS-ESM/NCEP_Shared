@@ -26,7 +26,7 @@ C   97-10-20  IREDELL  ADJUST PRECISION
 C   98-06-11  IREDELL  GENERALIZE PRECISION USING FORTRAN 90 INTRINSIC
 C 1998-12-03  IREDELL  GENERALIZE PRECISION FURTHER
 C 1998-12-03  IREDELL  USE BLAS CALLS
-C 2007-04-26  YANG     FOR EQUALLY-SPACED GRID EXCLUDING POLES, CHANGE 
+C 2007-04-26  YANG     FOR EQUALLY-SPACED GRID EXCLUDING POLES, CHANGE
 c                      DIMENSION OF A FEW ARRAYS
 C 2008-04-08  Todling  Replaced errexit() with exit()
 C
@@ -206,7 +206,7 @@ C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	subroutine die_at_dgesv_messages_(INFO)
 	integer(4),intent(in) :: INFO
 
-	integer(4),parameter :: IEXIT=2
+	integer,parameter :: IEXIT=2
 
 	if(INFO<0) then
 	  write(*,*) "NCEP_sp/splat(): >>>> ERROR <<<< the ",
@@ -218,6 +218,6 @@ C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      &		INFO,",",INFO,") is singular"
 	endif
 
-	call exit(IEXIT)
+	stop IEXIT
 	end subroutine die_at_dgesv_messages_
       END

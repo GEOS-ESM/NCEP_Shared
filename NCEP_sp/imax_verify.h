@@ -19,19 +19,19 @@
 	subroutine exitn_(mp,n,im)
 	  implicit none
 	  integer,intent(in) :: mp,n,im
-	  integer*4 :: ierr=2
+	  integer :: ierr=2
 
 	  write(*,'(a,3(a,i5))') 'spffte(): -- ERROR -- ',
      &      'invalid imax =',im,', power of factor ',mp, ' is ',n
-          call exit(ierr)
+          stop ierr
 	end subroutine exitn_
 	subroutine exitm_(m,im)
 	  implicit none
 	  integer,intent(in) :: m,im
-	  integer*4 :: ierr=2
+	  integer :: ierr=2
 	  write(*,'(a,3(a,i5))') 'spffte(): -- ERROR -- ',
      &      'invalid imax =',im,', non-factorized number =',m
-          call exit(ierr)
+          stop ierr
 	end subroutine exitm_
 	subroutine factor_get_(m,mp,n)
 	  implicit none
