@@ -348,6 +348,11 @@ add_custom_command (
   )
 esma_add_library (${this} SRCS ${srcs})
 
+# NAG compiler needs -dusty flag to tolerate non-standard EQUIVALENCE usage
+if (CMAKE_Fortran_COMPILER_ID MATCHES "NAG")
+  target_compile_options(${this} PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:${DUSTY}>)
+endif()
+
 set (CMAKE_C_FLAGS_RELEASE "-O")
 
 # This is equivalent to FOPT=$(FOPT2) in GNU Make
