@@ -5,7 +5,7 @@ string (REPLACE NCEP_w3_ "" precision ${this})
 # TODO: there should be a platform switch for spffte.f (e.g., SGI) TLC
 
 set (srcs
-   errexit.f getgbens.f iw3unpbf.f sbytes.f w3fi59.f w3log.f errmsg.f
+   errexit.f getgbens.f sbytes.f w3fi59.f w3log.f errmsg.f
    getgbep.f ixgb.f skgb.f w3fi63.f w3movdat.f fparsei.f getgbex.f
    lengds.f start.f w3fi68.f w3pradat.f fparser.f getgbexm.f mova2i.f
    summary.f w3fi71.f w3reddat.f gbytes_char.f getgb.f orders.f
@@ -25,6 +25,12 @@ set (srcs
 set (CMAKE_Fortran_FLAGS_RELEASE "-O2 ${common_Fortran_flags} ${GEOS_Fortran_Release_FPE_Flags} ${FIXED_SOURCE} ${ALIGNCOM}")
 
 esma_add_library (${this} SRCS ${srcs})
+
+# NAG compiler needs -dusty flag to tolerate non-standard EQUIVALENCE usage
+if (CMAKE_Fortran_COMPILER_ID MATCHES "NAG")
+  target_compile_options(${this} PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:${DUSTY}>)
+endif()
+
 if (precision MATCHES "r4i4")
   # use default real/int precisions
 elseif (precision MATCHES "r8i4")

@@ -179,7 +179,7 @@ C$$$
 
       INTEGER  IRTCHN(*),JDATE(5),JDUMP(5)
 
-      INTEGER(8) IDSDMP
+      INTEGER*8 IDSDMP
 
       CHARACTER*8 SUBSET,DSNAME
 
@@ -202,7 +202,7 @@ C$$$
       CHARACTER*10 BRTSTR
       DATA BRTSTR/'CHNM TMBR '/
 
-      REAL(8) XIDENT(11),XINFO(12),SRFDAT(6),RETDAT(5,40),BRTDAT(2,32)
+      REAL*8 XIDENT(11),XINFO(12),SRFDAT(6),RETDAT(5,40),BRTDAT(2,32)
 
       DIMENSION  KOUNT(0:3,4),ISATOB(11),RSATOB(17)
       DATA  KOUNT/16*0/,XMSG/99999./,IMSG/99999/,BMISS/10.E10/
@@ -259,7 +259,9 @@ C            Y2K COMPLIANT (BUFRLIB DOES THE WINDOWING HERE)
          ENDIF
          IDSDAT = JDATE(1)*1E6+JDATE(2)*1E4+JDATE(3)*1E2+JDATE(4)
          IF(JDUMP(1).LE.0)  THEN
-            IDSDMP = 999999999999_8
+            IDSDMP = 999999
+            IDSDMP = IDSDMP * 1000000
+            IDSDMP = IDSDMP + 999999
          ELSE
             IF(JDUMP(1).LT.100)  THEN
 
@@ -418,7 +420,7 @@ C  here by "XIDENT(3)" - should be in units of Degrees West - and East +
 C  (-180.0 to +180.0); however some BUFR data sets (e.g., PREPBUFR) are
 C  known to encode 0-06-002 in units of Degrees East (0.0 to 359.99) --
 C  So we use the following conversion to work in either case ...
-         RSATOB(3) = 360._8 - MOD(360._8-XIDENT(3),360._8)
+         RSATOB(3) = 360. - MOD(360.-XIDENT(3),360.)
          IF(RSATOB(3).EQ.360.0)  RSATOB(3) = 0.0
       ELSE
          WRITE(6,2074) KOUNTR
