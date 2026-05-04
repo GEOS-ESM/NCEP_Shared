@@ -354,7 +354,10 @@ module sigio_module
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ! Public Variables
   integer,parameter,public:: sigio_lhead1=32
-  integer,parameter,public:: sigio_intkind=4,sigio_realkind=4,sigio_dblekind=8
+  integer,parameter,public:: sigio_intkind=SELECTED_INT_KIND(9)
+  integer,parameter,public:: sigio_realkind=SELECTED_REAL_KIND(6)
+  integer,parameter,public:: sigio_dblekind=SELECTED_REAL_KIND(15)
+  integer,parameter,public:: sigio_intkind8=SELECTED_INT_KIND(18)
   integer,parameter,public:: sigio_charkind=8
   real(sigio_intkind),parameter,public:: sigio_intfill=-9999_sigio_intkind
   real(sigio_realkind),parameter,public:: sigio_realfill=-9999._sigio_realkind
