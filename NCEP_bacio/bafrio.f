@@ -16,6 +16,7 @@ C-----------------------------------------------------------------------
 !
 C-----------------------------------------------------------------------
       SUBROUTINE BAFRINDEX(LU,IB,LX,IX)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAFRINDEX      BYTE-ADDRESSABLE FORTRAN RECORD INDEX
@@ -59,7 +60,7 @@ C$$$
       INTEGER,INTENT(IN):: LU,IB
       INTEGER,INTENT(INOUT):: LX
       INTEGER,INTENT(OUT):: IX
-      integer(kind=8) :: LONG_IB,LONG_LX ,LONG_IX
+      INTEGER(BACIO_INT8) :: LONG_IB,LONG_LX ,LONG_IX
 !
       LONG_IB=IB
       LONG_LX=LX
@@ -71,6 +72,7 @@ C$$$
       end SUBROUTINE BAFRINDEX
 C-----------------------------------------------------------------------
       SUBROUTINE BAFRINDEXL(LU,IB,LX,IX)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAFRINDEXL      BYTE-ADDRESSABLE FORTRAN RECORD INDEX
@@ -109,12 +111,12 @@ C
 C$$$
       IMPLICIT NONE
       INTEGER,INTENT(IN):: LU
-      INTEGER(KIND=8),INTENT(IN):: IB
-      INTEGER(KIND=8),INTENT(INOUT):: LX
-      INTEGER(KIND=8),INTENT(OUT):: IX
-      INTEGER(KIND=8),PARAMETER:: LBCW=4
+      INTEGER(BACIO_INT8),INTENT(IN):: IB
+      INTEGER(BACIO_INT8),INTENT(INOUT):: LX
+      INTEGER(BACIO_INT8),INTENT(OUT):: IX
+      INTEGER(BACIO_INT8),PARAMETER:: LBCW=4
       INTEGER(KIND=LBCW):: BCW1,BCW2
-      INTEGER(KIND=8):: KR
+      INTEGER(BACIO_INT8):: KR
       CHARACTER(16) :: MACHINE_ENDIAN
       LOGICAL :: DO_BYTESWAP
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -164,6 +166,7 @@ C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       END SUBROUTINE BAFRINDEXL
 C-----------------------------------------------------------------------
       SUBROUTINE BAFRREAD(LU,IB,NB,KA,A)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAFRREAD       BYTE-ADDRESSABLE FORTRAN RECORD READ
@@ -205,7 +208,7 @@ C$$$
       INTEGER,INTENT(IN):: LU,IB,NB
       INTEGER,INTENT(OUT):: KA
       CHARACTER,INTENT(OUT):: A(NB)
-      INTEGER(KIND=8) :: LONG_IB,LONG_NB,LONG_KA
+      INTEGER(BACIO_INT8) :: LONG_IB,LONG_NB,LONG_KA
 !
         if((IB<0.and.IB/=-1) .or. NB<0 ) THEN
           print *,'WRONG: in BAFRREAD starting postion IB or read '//    &
@@ -220,6 +223,7 @@ C$$$
       END SUBROUTINE BAFRREAD
 C-----------------------------------------------------------------------
       SUBROUTINE BAFRREADL(LU,IB,NB,KA,A)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAFRREADL      BYTE-ADDRESSABLE FORTRAN RECORD READ
@@ -257,12 +261,12 @@ C
 C$$$
       IMPLICIT NONE
       INTEGER,INTENT(IN):: LU
-      INTEGER(kind=8),INTENT(IN):: IB,NB
-      INTEGER(kind=8),INTENT(OUT):: KA
+      INTEGER(BACIO_INT8),INTENT(IN):: IB,NB
+      INTEGER(BACIO_INT8),INTENT(OUT):: KA
       CHARACTER,INTENT(OUT):: A(NB)
-      INTEGER(kind=8),PARAMETER:: LBCW=4
-      INTEGER(kind=8):: LX,IX
-      INTEGER(kind=8):: KR
+      INTEGER(BACIO_INT8),PARAMETER:: LBCW=4
+      INTEGER(BACIO_INT8):: LX,IX
+      INTEGER(BACIO_INT8):: KR
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 C  VALIDATE FORTRAN RECORD
       CALL BAFRINDEXL(LU,IB,LX,IX)
@@ -284,6 +288,7 @@ C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       END SUBROUTINE BAFRREADL
 C-----------------------------------------------------------------------
       SUBROUTINE BAFRWRITE(LU,IB,NB,KA,A)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAFRWRITE      BYTE-ADDRESSABLE FORTRAN RECORD WRITE
@@ -324,7 +329,7 @@ C$$$
       INTEGER,INTENT(IN):: LU,IB,NB
       INTEGER,INTENT(OUT):: KA
       CHARACTER,INTENT(IN):: A(NB)
-      INTEGER(KIND=8) :: LONG_IB,LONG_NB,LONG_KA
+      INTEGER(BACIO_INT8) :: LONG_IB,LONG_NB,LONG_KA
 !
         if((IB<0.and.IB/=-1) .or. NB<0 ) THEN
           print *,'WRONG: in BAFRWRITE starting postion IB or read '//   &
@@ -341,6 +346,7 @@ C$$$
       END SUBROUTINE BAFRWRITE
 C-----------------------------------------------------------------------
       SUBROUTINE BAFRWRITEL(LU,IB,NB,KA,A)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAFRWRITEL     BYTE-ADDRESSABLE FORTRAN RECORD WRITE
@@ -375,13 +381,13 @@ C
 C$$$
       IMPLICIT NONE
       INTEGER,INTENT(IN):: LU
-      INTEGER(KIND=8),INTENT(IN):: IB,NB
-      INTEGER(kind=8),INTENT(OUT):: KA
+      INTEGER(BACIO_INT8),INTENT(IN):: IB,NB
+      INTEGER(BACIO_INT8),INTENT(OUT):: KA
       CHARACTER,INTENT(IN):: A(NB)
 !
-      INTEGER(kind=8),PARAMETER:: LBCW=4
+      INTEGER(BACIO_INT8),PARAMETER:: LBCW=4
       INTEGER(kind=LBCW):: BCW
-      INTEGER(kind=8):: KR
+      INTEGER(BACIO_INT8):: KR
       INTEGER(LBCW):: BCW2,LBCW2
       CHARACTER(16) :: MACHINE_ENDIAN
       LOGICAL :: DO_BYTESWAP

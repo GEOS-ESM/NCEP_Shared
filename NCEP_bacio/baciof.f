@@ -15,6 +15,7 @@ C ATTRIBUTES:
 C   LANGUAGE: FORTRAN 90
 C
 C$$$
+      INTEGER,PARAMETER :: BACIO_INT8 = SELECTED_INT_KIND(18)
       INTEGER,EXTERNAL:: BACIO,BACIOL
       INTEGER,PARAMETER :: FDDIM=9999
       INTEGER,DIMENSION(FDDIM),SAVE:: FD=FDDIM*0
@@ -59,6 +60,7 @@ C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       END
 C-----------------------------------------------------------------------
       SUBROUTINE BAOPEN(LU,CFN,IRET)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAOPEN         BYTE-ADDRESSABLE OPEN
@@ -90,7 +92,7 @@ C$$$
       USE BACIO_MODULE
       CHARACTER CFN*(*)
       CHARACTER(80) CMSG
-      integer(kind=8) IB,JB,NB,KA
+      INTEGER(BACIO_INT8) IB,JB,NB,KA
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       IF(LU.LT.001.OR.LU.GT.FDDIM) THEN
         IRET=6
@@ -102,6 +104,7 @@ C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       END
 C-----------------------------------------------------------------------
       SUBROUTINE BAOPENR(LU,CFN,IRET)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAOPENR        BYTE-ADDRESSABLE OPEN
@@ -133,7 +136,7 @@ C$$$
       USE BACIO_MODULE
       CHARACTER CFN*(*)
       INTEGER LU,iret
-      integer(kind=8) IB,JB,NB,KA
+      INTEGER(BACIO_INT8) IB,JB,NB,KA
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       IF(LU.LT.001.OR.LU.GT.FDDIM) THEN
         IRET=6
@@ -145,6 +148,7 @@ C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       END
 C-----------------------------------------------------------------------
       SUBROUTINE BAOPENW(LU,CFN,IRET)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAOPENW        BYTE-ADDRESSABLE OPEN
@@ -175,7 +179,7 @@ C
 C$$$
       USE BACIO_MODULE
       CHARACTER CFN*(*)
-      integer(kind=8) IB,JB,NB,KA
+      INTEGER(BACIO_INT8) IB,JB,NB,KA
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       IF(LU.LT.001.OR.LU.GT.FDDIM) THEN
         IRET=6
@@ -217,7 +221,7 @@ C
 C$$$
       USE BACIO_MODULE
       CHARACTER CFN*(*)
-      integer(kind=8) IB,JB,NB,KA
+      INTEGER(BACIO_INT8) IB,JB,NB,KA
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       IF(LU.LT.001.OR.LU.GT.FDDIM) THEN
         IRET=6
@@ -229,6 +233,7 @@ C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       END
 C-----------------------------------------------------------------------
       SUBROUTINE BAOPENWA(LU,CFN,IRET)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAOPENWA       BYTE-ADDRESSABLE OPEN
@@ -259,7 +264,7 @@ C
 C$$$
       USE BACIO_MODULE
       CHARACTER CFN*(*)
-      integer(kind=8) IB,JB,NB,KA
+      INTEGER(BACIO_INT8) IB,JB,NB,KA
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       IF(LU.LT.001.OR.LU.GT.FDDIM) THEN
         IRET=6
@@ -300,7 +305,7 @@ C   LANGUAGE: FORTRAN 90
 C
 C$$$
       USE BACIO_MODULE
-      integer(kind=8) IB,JB,NB,KA
+      INTEGER(BACIO_INT8) IB,JB,NB,KA
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       IF(LU.LT.001.OR.LU.GT.FDDIM) THEN
         IRET=6
@@ -313,6 +318,7 @@ C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       END
 C-----------------------------------------------------------------------
       SUBROUTINE BAREAD(LU,IB,NB,KA,A)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAREAD         BYTE-ADDRESSABLE READ
@@ -349,7 +355,7 @@ C$$$
         INTEGER,INTENT(IN) :: LU,IB,NB
         INTEGER,INTENT(OUT) :: KA
         CHARACTER,INTENT(OUT) :: A(NB)
-        INTEGER(KIND=8) :: LONG_IB,LONG_NB,LONG_KA
+        INTEGER(BACIO_INT8) :: LONG_IB,LONG_NB,LONG_KA
 !
         if(NB<0 ) THEN
           print *,'WRONG: in BAREAD read data size NB < 0, STOP! '//       &
@@ -365,6 +371,7 @@ C$$$
       END SUBROUTINE BAREAD
 C-----------------------------------------------------------------------
       SUBROUTINE BAREADL(LU,IB,NB,KA,A)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAREAD         BYTE-ADDRESSABLE READ
@@ -407,12 +414,12 @@ C$$$
 !    
       IMPLICIT NONE
       INTEGER,intent(in)          :: LU
-      INTEGER(kind=8),intent(in)  :: IB,NB
-      INTEGER(kind=8),intent(out) :: KA
+      INTEGER(BACIO_INT8),intent(in)  :: IB,NB
+      INTEGER(BACIO_INT8),intent(out) :: KA
       CHARACTER,intent(out)       :: A(NB)
-      integer(kind=8),PARAMETER :: NY=4096,MY=4
-      INTEGER(KIND=8) NS(MY),NN(MY)
-      INTEGER(kind=8) JB,LONG_0,KY,I,K,IY,JY,LUX
+      INTEGER(BACIO_INT8),PARAMETER :: NY=4096,MY=4
+      INTEGER(BACIO_INT8) NS(MY),NN(MY)
+      INTEGER(BACIO_INT8) JB,LONG_0,KY,I,K,IY,JY,LUX
       INTEGER IRET
 !      INTEGER LU,IB,NB,KA
       CHARACTER Y(NY,MY)
@@ -495,6 +502,7 @@ C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       END SUBROUTINE BAREADL
 C-----------------------------------------------------------------------
       SUBROUTINE BAWRITE(LU,IB,NB,KA,A)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAWRITE        BYTE-ADDRESSABLE WRITE
@@ -534,7 +542,7 @@ C$$$
         INTEGER,INTENT(IN) :: LU,IB,NB
         INTEGER,INTENT(OUT) :: KA
         CHARACTER,INTENT(IN) :: A(NB)
-        INTEGER(KIND=8) :: LONG_IB,LONG_NB,LONG_KA
+        INTEGER(BACIO_INT8) :: LONG_IB,LONG_NB,LONG_KA
 !
         if(NB<0 ) THEN
           print *,'WRONG: in BAWRITE read data size NB <0, STOP! '//      &
@@ -551,6 +559,7 @@ C$$$
       END SUBROUTINE BAWRITE
 C-----------------------------------------------------------------------
       SUBROUTINE BAWRITEL(LU,IB,NB,KA,A)
+      USE BACIO_MODULE
 C$$$  SUBPROGRAM DOCUMENTATION BLOCK
 C
 C SUBPROGRAM: BAWRITEL       BYTE-ADDRESSABLE WRITE
@@ -591,11 +600,11 @@ C$$$
       IMPLICIT NONE
 !
       INTEGER,intent(in)         :: LU
-      INTEGER(kind=8),intent(in) :: IB,NB
-      INTEGER(kind=8),intent(out):: KA
+      INTEGER(BACIO_INT8),intent(in) :: IB,NB
+      INTEGER(BACIO_INT8),intent(out):: KA
       CHARACTER,intent(in) ::  A(NB)
 !
-      INTEGER(kind=8) :: JB,LONG_0
+      INTEGER(BACIO_INT8) :: JB,LONG_0
       INTEGER :: IRET
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       IF(FD(LU).LE.0) THEN
@@ -661,7 +670,7 @@ C$$$
       INTEGER,intent(in) :: LU
       INTEGER,intent(in) :: NB
       CHARACTER,intent(in) ::  A(NB)
-      INTEGER(kind=8) :: LONG_NB
+      INTEGER(BACIO_INT8) :: LONG_NB
 !
       IF(NB<0) THEN
        PRINT *,'WRONG: NB: the number of bytes to write  <0, STOP!'
@@ -708,9 +717,9 @@ C$$$
 !
       IMPLICIT NONE
       INTEGER,intent(in) :: LU
-      INTEGER(kind=8),intent(in) :: NB
+      INTEGER(BACIO_INT8),intent(in) :: NB
       CHARACTER,INTENT(in)       :: A(NB)
-      INTEGER(kind=8) :: LONG_0,JB,KA
+      INTEGER(BACIO_INT8) :: LONG_0,JB,KA
       INTEGER :: IRET
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       IF(FD(LU).LE.0) THEN
