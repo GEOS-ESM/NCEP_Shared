@@ -12,8 +12,10 @@ set (CMAKE_Fortran_FLAGS_RELEASE "-O3 ${GEOS_Fortran_Release_FPE_Flags} ${ALIGNC
 esma_add_library(${this} SRCS ${srcs})
 
 # NAG requires MISMATCH flag for intentional type mismatches
+# BACIOL, BACIO, BAWRITEL, BAREADL are byte I/O C functions called with varying Fortran types intentionally
 if (CMAKE_Fortran_COMPILER_ID MATCHES "NAG")
   target_compile_options(${this} PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:${MISMATCH}>)
+  target_compile_options(${this} PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:-wmismatch=BACIOL,BACIO,BAWRITEL,BAREADL>)
 endif()
 
 set (CMAKE_C_FLAGS_RELEASE "-O -I . -DLINUX -Dfunder -DFortranByte=char -DFortranInt=int -DFortranLlong='long long' -O3 -fPIC")
