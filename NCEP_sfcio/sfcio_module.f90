@@ -409,7 +409,7 @@ module sfcio_module
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ! Public Variables
   integer,parameter,public:: sfcio_lhead1=32
-  integer,parameter,public:: sfcio_intkind=4,sfcio_realkind=4,sfcio_dblekind=8
+  integer,parameter,public:: sfcio_intkind=SELECTED_INT_KIND(9),sfcio_realkind=SELECTED_REAL_KIND(6),sfcio_dblekind=SELECTED_REAL_KIND(15)
   real(sfcio_realkind),parameter,public:: sfcio_realfill=-9999.
   real(sfcio_dblekind),parameter,public:: sfcio_dblefill=sfcio_realfill
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

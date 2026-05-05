@@ -3,7 +3,7 @@
        type(sfcio_head):: head
        type(sfcio_data):: data
        integer ii,jj,iret
-       real(4),allocatable,dimension(:,:)::fld
+       real(kind=SELECTED_REAL_KIND(6)),allocatable,dimension(:,:)::fld
        call sfcio_srohdc(11,'sfcf06',head,data,iret)
        print *, 'idate ', head%fhour,head%idate
        print *, 'lat, lon, ivs = ', head%latb, head%lonb, head%ivs
@@ -24,7 +24,7 @@
        deallocate(fld)
        contains
        subroutine sp2np_ (fldin)
-       real(4) fldin(:,:)
+       real(kind=SELECTED_REAL_KIND(6)) fldin(:,:)
        integer i,j
        integer im,jm
        im=size(fld,1)

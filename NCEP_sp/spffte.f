@@ -32,12 +32,12 @@ C     IDIR     - INTEGER DIRECTION FLAG
 C                IDIR=0 TO INITIALIZE TRIGONOMETRIC DATA
 C                IDIR>0 TO TRANSFORM FROM FOURIER TO PHYSICAL SPACE
 C                IDIR<0 TO TRANSFORM FROM PHYSICAL TO FOURIER SPACE
-C     AFFT       REAL(8) (25+2*IMAX) AUXILIARY ARRAY IF IDIR<>0
+C     AFFT       REAL*8 (25+2*IMAX) AUXILIARY ARRAY IF IDIR<>0
 C
 C   OUTPUT ARGUMENT LIST:
 C     W        - COMPLEX(INCW,KMAX) COMPLEX AMPLITUDES IF IDIR<0
 C     G        - REAL(INCG,KMAX) REAL VALUES IF IDIR>0
-C     AFFT       REAL(8) (25+2*IMAX) AUXILIARY ARRAY IF IDIR=0
+C     AFFT       REAL*8 (25+2*IMAX) AUXILIARY ARRAY IF IDIR=0
 C
 C SUBPROGRAMS CALLED:
 C   SCRFT        IBM ESSL COMPLEX TO REAL FOURIER TRANSFORM
@@ -65,8 +65,8 @@ C$$$
         REAL,INTENT(INOUT):: W(2*INCW,KMAX)
         REAL,INTENT(INOUT):: G(INCG,KMAX)
         INTEGER:: I,K
-        REAL(8),INTENT(INOUT):: AFFT(25+2*IMAX)
-        REAL(8):: T(IMAX+2)
+        REAL*8,INTENT(INOUT):: AFFT(25+2*IMAX)
+        REAL*8:: T(IMAX+2)
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 C  INITIALIZATION.
 !-- The restriction on imax is not verified.  e.g. imax=540.
@@ -117,7 +117,7 @@ C     ******************************************************************
 C
       SUBROUTINE RFFTF (N,R,WSAVE)
       IMPLICIT NONE
-      REAL (KIND=8)       R(1)       ,WSAVE(1)
+      REAL*8       R(1)       ,WSAVE(1)
       INTEGER N
       IF (N .EQ. 1) RETURN
       CALL RFFTF1 (N,R,WSAVE,WSAVE(N+1),WSAVE(2*N+1))
@@ -125,7 +125,7 @@ C
       END
       SUBROUTINE RFFTB (N,R,WSAVE)
       IMPLICIT NONE
-      REAL (KIND=8)       R(1)       ,WSAVE(1)
+      REAL*8       R(1)       ,WSAVE(1)
       INTEGER N
       IF (N .EQ. 1) RETURN
       CALL RFFTB1 (N,R,WSAVE,WSAVE(N+1),WSAVE(2*N+1))
@@ -133,7 +133,7 @@ C
       END
       SUBROUTINE RFFTI (N,WSAVE)
       IMPLICIT NONE
-      REAL (KIND=8)       WSAVE(1)
+      REAL*8       WSAVE(1)
       INTEGER N
       IF (N .EQ. 1) RETURN
       CALL RFFTI1 (N,WSAVE(N+1),WSAVE(2*N+1))
@@ -141,7 +141,7 @@ C
       END
       SUBROUTINE RFFTB1 (N,C,CH,WA,IFAC)
       IMPLICIT NONE
-      REAL (KIND=8)  CH(1)  ,C(1)  ,WA(1)
+      REAL*8  CH(1)  ,C(1)  ,WA(1)
       INTEGER IFAC(*),N,NF,NA,L1,IW,K1,IP,L2,IDO,IDL1,IX2,IX3,I,IX4
       NF = IFAC(2)
       NA = 0
@@ -202,7 +202,7 @@ C
       END
       SUBROUTINE RFFTF1 (N,C,CH,WA,IFAC)
       IMPLICIT NONE
-      REAL (KIND=8)  CH(1)  ,C(1)  ,WA(1)
+      REAL*8  CH(1)  ,C(1)  ,WA(1)
       INTEGER IFAC(*),N,NF,NA,L1,IW,K1,IP,L2,IDO,IDL1,IX2,IX3,KH,I,IX4
       NF = IFAC(2)
       NA = 1
@@ -263,7 +263,7 @@ C
       END
       SUBROUTINE RFFTI1 (N,WA,IFAC)
       IMPLICIT NONE
-      REAL (KIND=8)  WA(1),TPI,ARGH,ARGLD,FI,ARG
+      REAL*8  WA(1),TPI,ARGH,ARGLD,FI,ARG
       INTEGER IFAC(*),NTRYH(4),NL,N,NF,J,NTRY,NQ,NR,I,IB,IS,NFM1,L1,
      &        K1,IP,LD,L2,IDO,IPM,II
       DATA NTRYH(1),NTRYH(2),NTRYH(3),NTRYH(4)/4,2,3,5/
@@ -326,7 +326,7 @@ C
       SUBROUTINE RADB2 (IDO,L1,CC,CH,WA1)
       IMPLICIT NONE
       INTEGER IDO,L1,K,IDP2,I,IC
-      REAL (KIND=8)  WA1(1),CC(IDO,2,L1),CH(IDO,L1,2),TR2,TI2
+      REAL*8  WA1(1),CC(IDO,2,L1),CH(IDO,L1,2),TR2,TI2
 
       DO 101 K=1,L1
          CH(1,K,1) = CC(1,1,K)+CC(IDO,2,K)
@@ -356,7 +356,7 @@ C
       SUBROUTINE RADB3 (IDO,L1,CC,CH,WA1,WA2)
       IMPLICIT NONE
       INTEGER IDO,L1,K,IDP2,I,IC
-      REAL (KIND=8)  CC(IDO,3,L1),CH(IDO,L1,3),WA1(1),WA2(1),
+      REAL*8  CC(IDO,3,L1),CH(IDO,L1,3),WA1(1),WA2(1),
      &                      TR2,CR2,CI3,TAUR,TAUI,DR2,DR3,DI2,DI3,
      &                      CR3,CI2,TI2
       DATA TAUR,TAUI /-.5,.866025403784439/
@@ -398,7 +398,7 @@ C
       SUBROUTINE RADB4 (IDO,L1,CC,CH,WA1,WA2,WA3)
       IMPLICIT NONE
       INTEGER IDO,L1,K,IDP2,I,IC
-      REAL (KIND=8)  CC(IDO,4,L1),CH(IDO,L1,4),WA1(1),WA2(1),
+      REAL*8  CC(IDO,4,L1),CH(IDO,L1,4),WA1(1),WA2(1),
      &                      WA3(1),TR1,TR2,TR3,TR4,SQRT2,TI1,TI2,TI3,
      &                      TI4,CI3,CR2,CR4,CI2,CI4,CR3
       DATA SQRT2 /1.414213562373095/
@@ -460,7 +460,7 @@ C
       SUBROUTINE RADB5 (IDO,L1,CC,CH,WA1,WA2,WA3,WA4)
       IMPLICIT NONE
       INTEGER IDO,L1,K,IDP2,I,IC
-      REAL (KIND=8)  CC(IDO,5,L1),CH(IDO,L1,5),WA1(1),WA2(1),
+      REAL*8  CC(IDO,5,L1),CH(IDO,L1,5),WA1(1),WA2(1),
      &                      WA3(1),WA4(1),TR11,TI11,TR12,TI12,TI5,TI4,
      &                      TR2,TR3,CR2,CR3,CI5,CI4,DI3,DI4,DR3,DR4,
      &                      DI5,DI2,DR5,DR2,TR5,TR4,TI2,TI3,CR5,
@@ -530,7 +530,7 @@ C
       IMPLICIT NONE
       INTEGER IDO,L1,K,IDP2,I,IC,IP,NBD,IPP2,IPPH,JC,J,J2,IDIJ,IS,IK,
      &        IDL1,LC,L
-      REAL (KIND=8)  CC(IDO,IP,L1),CH(IDO,L1,IP),TPI,ARG,DCP,
+      REAL*8  CC(IDO,IP,L1),CH(IDO,L1,IP),TPI,ARG,DCP,
      &                C1(IDO,L1,IP),C2(IDL1,IP),DSP,AR2,DS2,DC2,AI2,
      &                CH2(IDL1,IP),WA(1),AR2H,AR1,AI1,AR1H
       DATA TPI/6.28318530717959/
@@ -701,7 +701,7 @@ C
       SUBROUTINE RADF2 (IDO,L1,CC,CH,WA1)
       IMPLICIT NONE
       INTEGER IDO,L1,K,IDP2,I,IC
-      REAL (KIND=8)  CC(IDO,L1,2),CH(IDO,2,L1),WA1(1),TR2,TI2
+      REAL*8  CC(IDO,L1,2),CH(IDO,2,L1),WA1(1),TR2,TI2
 
       DO 101 K=1,L1
          CH(1,1,K) = CC(1,K,1)+CC(1,K,2)
@@ -730,7 +730,7 @@ C
       SUBROUTINE RADF3 (IDO,L1,CC,CH,WA1,WA2)
       IMPLICIT NONE
       INTEGER IDO,L1,K,IDP2,I,IC
-      REAL (KIND=8)  CC(IDO,L1,3),CH(IDO,3,L1),WA1(1),WA2(1),
+      REAL*8  CC(IDO,L1,3),CH(IDO,3,L1),WA1(1),WA2(1),
      &                      TAUR,TAUI,CR2,DR2,DI2,DR3,DI3,CI2,TR3,TI3
      &                      ,TI2,TR2
       DATA TAUR,TAUI /-.5,.866025403784439/
@@ -769,7 +769,7 @@ C
       SUBROUTINE RADF4 (IDO,L1,CC,CH,WA1,WA2,WA3)
       IMPLICIT NONE
       INTEGER IDO,L1,K,IDP2,I,IC
-      REAL (KIND=8)  CC(IDO,L1,4),CH(IDO,4,L1),WA1(1),WA2(1),
+      REAL*8  CC(IDO,L1,4),CH(IDO,4,L1),WA1(1),WA2(1),
      &                      WA3(1),TR1,TR2,CR2,CI2,CR3,CI3,CR4,CI4,TR4,
      &                      TI2,TI3,TI4,TI1,TR3,HSQT2
       DATA HSQT2 /.7071067811865475/
@@ -827,7 +827,7 @@ C
       SUBROUTINE RADF5 (IDO,L1,CC,CH,WA1,WA2,WA3,WA4)
       IMPLICIT NONE
       INTEGER IDO,L1,K,IDP2,I,IC
-      REAL (KIND=8)  CC(IDO,L1,5),CH(IDO,5,L1),WA1(1),WA2(1),
+      REAL*8  CC(IDO,L1,5),CH(IDO,5,L1),WA1(1),WA2(1),
      &                      WA3(1),WA4(1),TR11,TI11,TR12,TI12,CR2,
      &                      CI5,CR3,CI4,DR2,DI2,DR3,DI3,DR4,DI4,DR5,DI5
      &                      ,TR3,TR5,TI3,TI4,TR4,
@@ -894,7 +894,7 @@ C
       IMPLICIT NONE
       INTEGER IDO,L1,K,IDP2,I,IC,IPPH,IPP2,NBD,IS,IDIJ,LC,J2,IK,J,IP,
      &        IDL1,L,JC
-      REAL (KIND=8)  CC(IDO,L1,IP),CH(IDO,IP,L1),C1(IDO,L1,IP),
+      REAL*8  CC(IDO,L1,IP),CH(IDO,IP,L1),C1(IDO,L1,IP),
      &                      C2(IDL1,IP),CH2(IDL1,IP),WA(1),TPI,ARG,DCP,
      &                      DSP,DC2,DS2,AR1H,AR2H,AR2,AI2,AI1,AR1
       DATA TPI/6.28318530717959/

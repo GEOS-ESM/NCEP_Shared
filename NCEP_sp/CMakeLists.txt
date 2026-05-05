@@ -18,6 +18,11 @@ set (CMAKE_Fortran_FLAGS_RELEASE "-O2 ${GEOS_Fortran_Release_FPE_Flags} ${EXTEND
 
 esma_add_library (${this} SRCS ${srcs} DEPENDENCIES NCEP_w3_${precision})
 
+# NAG compiler needs DUSTY flag for legacy FFT code with type punning
+if (CMAKE_Fortran_COMPILER_ID MATCHES "NAG")
+  target_compile_options(${this} PRIVATE $<$<COMPILE_LANGUAGE:Fortran>:${DUSTY}>)
+endif()
+
 if (APPLE)
    set(MKL_Fortran TRUE)
 endif ()
