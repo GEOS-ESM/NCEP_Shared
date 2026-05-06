@@ -33,12 +33,12 @@ C     IDIR     - INTEGER DIRECTION FLAG
 C                IDIR=0 TO INITIALIZE TRIGONOMETRIC DATA
 C                IDIR>0 TO TRANSFORM FROM FOURIER TO PHYSICAL SPACE
 C                IDIR<0 TO TRANSFORM FROM PHYSICAL TO FOURIER SPACE
-C     AFFT       REAL(8) (25+2*IMAX) AUXILIARY ARRAY IF IDIR<>0
+C     AFFT       REAL*8 (25+2*IMAX) AUXILIARY ARRAY IF IDIR<>0
 C
 C   OUTPUT ARGUMENT LIST:
 C     W        - COMPLEX(INCW,KMAX) COMPLEX AMPLITUDES IF IDIR<0
 C     G        - REAL(INCG,KMAX) REAL VALUES IF IDIR>0
-C     AFFT       REAL(8) (25+2*IMAX) AUXILIARY ARRAY IF IDIR=0
+C     AFFT       REAL*8 (25+2*IMAX) AUXILIARY ARRAY IF IDIR=0
 C
 C SUBPROGRAMS CALLED:
 C   SCRFT        IBM ESSL COMPLEX TO REAL FOURIER TRANSFORM
@@ -67,13 +67,13 @@ C$$$
         REAL,INTENT(INOUT):: G(INCG,KMAX)
         INTEGER:: I,K
 
-        REAL(8) :: AFFT(*) ! expects IMAX+256 by sgi_fft()
+        REAL*8 :: AFFT(*) ! expects IMAX+256 by sgi_fft()
 
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 c local variable
         integer j,ico,ico2,imaxd2
-        REAL(8) :: dummy(imax)
-        REAL(8) :: field(imax)
+        REAL*8 :: dummy(imax)
+        REAL*8 :: field(imax)
         COMPLEX(8) :: spcoef(imax/2 +1)
 c-----------------------------------
 

@@ -20,12 +20,13 @@
 !----------------------------------------------------------------------
         INTEGER,PARAMETER :: ASCII_0 = 48,ASCII_1 = 49,ASCII_2 = 50,    &
      &                     ASCII_3 = 51
-        INTEGER(4)        :: I
+        character               :: I*4
         common// I
 !
 !***** code start
 !     
-        I = ASCII_0 + ASCII_1*256 + ASCII_2*(256**2) + ASCII_3*(256**3)
+        I = ACHAR(ASCII_0) // ACHAR(ASCII_1) // ACHAR(ASCII_2) //       &
+     &      ACHAR(ASCII_3)
         call findendian(mendian)
 !
 !     ------------------------------------------------------------------

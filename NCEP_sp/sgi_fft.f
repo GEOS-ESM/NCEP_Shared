@@ -17,9 +17,9 @@
 
 ! !INPUT/OUTPUT PARAMETERS:
 
-      real(8)  :: x(ldx,lot)
+      REAL*8  :: x(ldx,lot)
       complex(8) :: y(ldy,lot)
-      real(8) :: afft (*)
+      REAL*8 :: afft (*)
 
 ! !DESCRIPTION:
 !  This routine calls an FFT from a librrary (-lscs at Goddard).
@@ -38,8 +38,8 @@
 
       external dzfftm, zdfftm
       integer                    :: isys(0:1)
-      real(8)                    :: work(nlon+2)
-      real(8)                   :: scale
+      REAL*8                    :: work(nlon+2)
+      REAL*8                   :: scale
 !  just follow Ron's dimension value--why multiplying 2 ??
       integer                    :: i
 

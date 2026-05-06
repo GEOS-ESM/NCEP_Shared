@@ -130,7 +130,7 @@ C$$$
 
       INTEGER IBUFTN(140),ISATOB(3),JDATE(5),JDUMP(5)
 
-      INTEGER(8) IDSDMP
+      INTEGER*8 IDSDMP
 
       CHARACTER*8 SUBSET,DSNAME
 
@@ -149,7 +149,7 @@ C$$$
       CHARACTER*10 RETSTR
       DATA RETSTR/'TMDB MIXR '/
 
-      REAL(8) XIDENT(11),SATDAT(2),SRFDAT(3),RETDAT(2,40)
+      REAL*8 XIDENT(11),SATDAT(2),SRFDAT(3),RETDAT(2,40)
 
       REAL TOVLEV(40)
 
@@ -205,7 +205,9 @@ C            Y2K COMPLIANT (BUFRLIB DOES THE WINDOWING HERE)
          ENDIF
          IDSDAT = JDATE(1)*1E6+JDATE(2)*1E4+JDATE(3)*1E2+JDATE(4)
          IF(JDUMP(1).LE.0)  THEN
-            IDSDMP = 999999999999_8
+            IDSDMP = 999999
+            IDSDMP = IDSDMP * 1000000
+            IDSDMP = IDSDMP + 999999
          ELSE
             IF(JDUMP(1).LT.100)  THEN
 
@@ -498,7 +500,7 @@ C  --------------------------------------------------------------------
 cppppp
 cdak           print *, 'AT L = ',L,'; RETDAT(2,L) = ',RETDAT(2,L)
 cppppp
-            TMP=RETDAT(2,L)*1000._8
+            TMP=RETDAT(2,L)*1000.
             IF(L.GT.25) WOPR(L-25) = MIN(BMISS,TMP)
          ENDDO
       ELSE

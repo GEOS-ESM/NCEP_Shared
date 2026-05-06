@@ -98,8 +98,9 @@ C-----------------------------------------------------------------------
       SUBROUTINE ORDERS(IN,ISORT,IDATA,INDEX,N,M,I1,I2)
  
       DIMENSION   ISORT(N),INDEX(N)
-      INTEGER(8)  IDATA(M,N),ICHEK,IBYT
-      REAL(8)     SMAL,RCHEK
+      INTEGER*8  IDATA(M,N),ICHEK,IBYT
+      INTEGER*8, PARAMETER :: MASK255 = 255
+      REAL*8     SMAL,RCHEK
       DIMENSION   INDX(0:255),KNDX(0:255)
       EQUIVALENCE (ICHEK,RCHEK)
  
@@ -153,7 +154,7 @@ C  -------------------------------------------------------------------
       ENDDO
  
       DO I=1,N
-      JBYT = IAND(ISHFT(IDATA(1,INDEX(I)),-IBYT*8_8),255_8)
+      JBYT = IAND(ISHFT(IDATA(1,INDEX(I)),-IBYT*8),MASK255)
       INDX(JBYT) = INDX(JBYT)+1
       ISORT(I) = INDEX(I)
       ENDDO
@@ -163,7 +164,7 @@ C  -------------------------------------------------------------------
       ENDDO
  
       DO I=1,N
-      JBYT = IAND(ISHFT(IDATA(1,ISORT(I)),-IBYT*8_8),255_8)
+      JBYT = IAND(ISHFT(IDATA(1,ISORT(I)),-IBYT*8),MASK255)
       INDEX(KNDX(JBYT)) = ISORT(I)
       KNDX(JBYT) = KNDX(JBYT)+1
       ENDDO
@@ -192,8 +193,9 @@ C-----------------------------------------------------------------------
       SUBROUTINE ORDER4(IN,ISORT,IDATA,INDEX,N,M,I1,I2)
  
       DIMENSION   ISORT(N),INDEX(N)
-      INTEGER(4)  IDATA(M,N),ICHEK,IBYT
-      REAL(4)     SMAL,RCHEK
+      INTEGER*4  IDATA(M,N),ICHEK,IBYT
+      INTEGER*4, PARAMETER :: MASK255 = 255
+      REAL*4     SMAL,RCHEK
       DIMENSION   INDX(0:255),KNDX(0:255)
       EQUIVALENCE (ICHEK,RCHEK)
  
@@ -240,7 +242,7 @@ C  -------------------------------------------------------------------
       ENDDO
  
       DO I=1,N
-      JBYT = IAND(ISHFT(IDATA(1,INDEX(I)),-IBYT*8_4),255_4)
+      JBYT = IAND(ISHFT(IDATA(1,INDEX(I)),-IBYT*8),MASK255)
       INDX(JBYT) = INDX(JBYT)+1
       ISORT(I) = INDEX(I)
       ENDDO
@@ -250,7 +252,7 @@ C  -------------------------------------------------------------------
       ENDDO
  
       DO I=1,N
-      JBYT = IAND(ISHFT(IDATA(1,ISORT(I)),-IBYT*8_4),255_4)
+      JBYT = IAND(ISHFT(IDATA(1,ISORT(I)),-IBYT*8),MASK255)
       INDEX(KNDX(JBYT)) = ISORT(I)
       KNDX(JBYT) = KNDX(JBYT)+1
       ENDDO
