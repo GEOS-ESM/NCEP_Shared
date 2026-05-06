@@ -54,17 +54,17 @@ C   LANGUAGE: FORTRAN 90
 C
 C$$$
       CHARACTER*256 CARG,CFMT
-      INTEGER*4 IARG,LARG,NCARG,NARG,IARGC
+      INTEGER*4 IARG,LARG,NCARG,NARG
       INTEGER IDAT(8),JDAT(8)
       REAL RINC(5)
       LOGICAL W3VALDAT
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 C  GET AND CHECK OPTIONAL ARGUMENTS
-      NARG=IARGC()
+      NARG=command_argument_count()
       IARG=1
       LSTOPT=0
       DOWHILE(IARG.LE.NARG.AND.LSTOPT.EQ.0)
-        CALL GETARG(IARG,CARG)
+        call get_command_argument(IARG,CARG)
         LARG=LEN_TRIM(CARG)
         IARG=IARG+1
         IF(CARG(1:1).NE.'-'.OR.
@@ -100,7 +100,7 @@ C  CHECK NUMBER OF ARGUMENTS
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 C  GET AND CHECK FIRST ARGUMENT (HOUR INCREMENT)
       IF(MARG.GE.1) THEN
-        CALL GETARG(IARG,CARG)
+        call get_command_argument(IARG,CARG)
         NCARG=LEN_TRIM(CARG)
         WRITE(CFMT,'("(I",I2,")")') NCARG
         READ(CARG,CFMT,IOSTAT=IRET) IHOUR
@@ -117,7 +117,7 @@ C  GET AND CHECK FIRST ARGUMENT (HOUR INCREMENT)
 C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 C  GET AND CHECK SECOND ARGUMENT (INITIAL DATE)
       IF(MARG.GE.2) THEN
-        CALL GETARG(IARG+1,CARG)
+        call get_command_argument(IARG+1,CARG)
         NCARG=LEN_TRIM(CARG)
         WRITE(CFMT,'("(I",I2,",3I2)")') NCARG-6
         IDAT=0
