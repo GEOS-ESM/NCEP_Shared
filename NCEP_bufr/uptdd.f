@@ -98,7 +98,7 @@ C  RETURN THE DESCRIPTOR INDICATED BY IENT
 C  ---------------------------------------
 
       IDSC = LDD+1 + (IENT-1)*2
-      IRET = IUPM(TABD(ID,LUN)(IDSC:IDSC),16)
+      IRET = IUPM(TABD(ID,LUN)(IDSC:IDSC+1),16)
 
 C  EXITS
 C  -----

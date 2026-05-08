@@ -133,7 +133,7 @@ C     IDM points to the starting byte within TABD(ID,LUN) at which
 C     the IDN value for this child mnemonic will be stored (as a
 C     packed integer of width = 2 bytes).
 
-      CALL IPKM(TABD(ID,LUN)(IDM:IDM),2,IDN)
+      CALL IPKM(TABD(ID,LUN)(IDM:IDM+1),2,IDN)
 
 C  EXIT
 C  ----

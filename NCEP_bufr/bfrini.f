@@ -246,7 +246,7 @@ c  .... IDXV is the version number of the local tables
       NXSTR(J) = NDNDX(J)*2
       DO I=1,NDNDX(J)
       I1 = I*2-1
-      CALL IPKM(DXSTR(J)(I1:I1),2,IFXY(DNDX(I,J)))
+      CALL IPKM(DXSTR(J)(I1:I1+1),2,IFXY(DNDX(I,J)))
       ENDDO
       ENDDO
 

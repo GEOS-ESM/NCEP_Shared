@@ -145,7 +145,7 @@ C     Table D information
       CALL PKB(       NSEQ,  8,MGWA,MBIT)
          DO J=1,NSEQ
          JJ  = LDD+2 + (J-1)*2
-         IDN = IUPM(TABD(I,LOT)(JJ:JJ),16)
+         IDN = IUPM(TABD(I,LOT)(JJ:JJ+1),16)
          CALL PKC(ADN30(IDN,L30),L30,MGWA,MBIT)
          ENDDO
       MBYT = MBYT+LEND
