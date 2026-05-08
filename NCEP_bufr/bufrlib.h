@@ -152,7 +152,7 @@ void nemtbb( f77int *, f77int *, char *, f77int *, f77int *, f77int *, f77int );
 void nummtb( f77int *, char *, f77int * );
 void numtbd( f77int *, f77int *, char *, char *, f77int *, size_t, size_t );
 void pktdd( f77int *, f77int *, f77int *, f77int * );
-f77int rbytes( char *, f77int *, size_t, size_t );
+f77int rbytes( char *, f77int *, f77int, f77int );
 void restd( f77int *, f77int *, f77int *, f77int * );
 void sorttbf( void );
 void srchtbf( f77int *, f77int *, f77int *, f77int *, f77int *,
