@@ -66,42 +66,42 @@ C$$$
       INCLUDE 'bufrlib.prm'
 
       CHARACTER*(*) NEMO
-      CHARACTER*1   TAB
+      CHARACTER*(*) TAB
 
 C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
 
       NEMO = ' '
       IRET = 0
-      TAB = ' '
+      IF(LEN(TAB).GE.1) TAB(1:1) = ' '
 
       IF(IDN.GE.IFXY('300000')) THEN
 
 C        LOOK FOR IDN IN TABLE D
 C        -----------------------
 
-         DO I=1,NTBD(LUN)
-            IF(IDN.EQ.IDND(I,LUN)) THEN
-               NEMO = TABD(I,LUN)(7:14)
-               TAB  = 'D'
-               IRET = I
-               GOTO 100
-            ENDIF
-         ENDDO
+          DO I=1,NTBD(LUN)
+             IF(IDN.EQ.IDND(I,LUN)) THEN
+                NEMO = TABD(I,LUN)(7:14)
+                IF(LEN(TAB).GE.1) TAB(1:1) = 'D'
+                IRET = I
+                GOTO 100
+             ENDIF
+          ENDDO
 
       ELSE
 
 C        LOOK FOR IDN IN TABLE B
 C        -----------------------
 
-         DO I=1,NTBB(LUN)
-            IF(IDN.EQ.IDNB(I,LUN)) THEN
-               NEMO = TABB(I,LUN)(7:14)
-               TAB  = 'B'
-               IRET = I
-               GOTO 100
-            ENDIF
-         ENDDO
+          DO I=1,NTBB(LUN)
+             IF(IDN.EQ.IDNB(I,LUN)) THEN
+                NEMO = TABB(I,LUN)(7:14)
+                IF(LEN(TAB).GE.1) TAB(1:1) = 'B'
+                IRET = I
+                GOTO 100
+             ENDIF
+          ENDDO
 
       ENDIF
 

@@ -38,18 +38,18 @@ C$$$
 	INCLUDE 'bufrlib.prm'
 
 	CHARACTER*128 BORT_STR
-	CHARACTER*1   CTB
+	CHARACTER*(*) CTB
 
 C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
 
-	IF ( CTB .EQ. 'A' ) THEN
+	IF ( LEN(CTB).GE.1 .AND. CTB(1:1) .EQ. 'A' ) THEN
 	  IGETNTBI = NTBA(LUN) + 1
 	  IMAX = NTBA(0)
-	ELSE IF ( CTB .EQ. 'B' ) THEN
+	ELSE IF ( LEN(CTB).GE.1 .AND. CTB(1:1) .EQ. 'B' ) THEN
 	  IGETNTBI = NTBB(LUN) + 1
 	  IMAX = NTBB(0)
-	ELSE IF ( CTB .EQ. 'D' ) THEN
+	ELSE IF ( LEN(CTB).GE.1 .AND. CTB(1:1) .EQ. 'D' ) THEN
 	  IGETNTBI = NTBD(LUN) + 1
 	  IMAX = NTBD(0)
 	ENDIF
@@ -57,6 +57,6 @@ C-----------------------------------------------------------------------
 
 	RETURN
 900	WRITE(BORT_STR,'("BUFRLIB: IGETNTBI - NUMBER OF INTERNAL TABLE'
-     .    //'",A1," ENTRIES EXCEEDS THE LIMIT (",I4,")")') CTB, IMAX
+     .    //'",A1," ENTRIES EXCEEDS THE LIMIT (",I4,")")') CTB(1:1), IMAX
 	CALL BORT(BORT_STR)
 	END
