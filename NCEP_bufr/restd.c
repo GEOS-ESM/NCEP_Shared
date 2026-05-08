@@ -61,7 +61,7 @@ void restd( f77int *lun, f77int *tddesc, f77int *nctddesc, f77int ctddesc[] )
 /*
 **  How many child descriptors does *tddesc have?
 */
-    numtbd( lun, tddesc, nemo, tab, &itbd, 9, sizeof(tab) );
+    numtbd( lun, tddesc, nemo, tab, &itbd, 9, 1 );
     uptdd( &itbd, lun, &i0, &inum );
 
     *nctddesc = 0;
@@ -74,7 +74,7 @@ void restd( f77int *lun, f77int *tddesc, f77int *nctddesc, f77int ctddesc[] )
 /*
 **	    desc is a local descriptor.
 */ 
-	    numtbd( lun, &desc, nemo, tab, &ictbd, 9, sizeof(tab) );
+	    numtbd( lun, &desc, nemo, tab, &ictbd, 9, 1 );
 	    if ( tab[0] == 'D' ) {
 /*
 **		desc is itself a local Table D descriptor, so resolve

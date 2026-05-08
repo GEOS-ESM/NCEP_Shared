@@ -87,7 +87,7 @@ C-----------------------------------------------------------------------
 
       FOLVAL = NEMO(1:1).EQ.'.'
       IRET = 0
-      IF(LEN(TAB).GE.1) TAB(1:1) = ' '
+      TAB(1:1) = ' '
 
 C  LOOK FOR NEMO IN TABLE B
 C  ------------------------
@@ -96,7 +96,7 @@ C  ------------------------
       NEMT = TABB(I,LUN)(7:14)
       IF(NEMT.EQ.NEMO) THEN
          IDN  = IDNB(I,LUN)
-         IF(LEN(TAB).GE.1) TAB(1:1) = 'B'
+         TAB(1:1) = 'B'
          IRET = I
          GOTO 100
       ELSEIF(FOLVAL.AND.NEMT(1:1).EQ.'.') THEN
@@ -104,7 +104,7 @@ C  ------------------------
          IF(NEMT(J:J).NE.'.' .AND. NEMT(J:J).NE.NEMO(J:J)) GOTO 1
          ENDDO
          IDN  = IDNB(I,LUN)
-         IF(LEN(TAB).GE.1) TAB(1:1) = 'B'
+         TAB(1:1) = 'B'
          IRET = I
          GOTO 100
       ENDIF
@@ -122,7 +122,7 @@ C  ----------------------------------
       NEMT = TABD(I,LUN)(7:14)
       IF(NEMT.EQ.NEMO) THEN
          IDN  = IDND(I,LUN)
-         IF(LEN(TAB).GE.1) TAB(1:1) = 'D'
+         TAB(1:1) = 'D'
          IRET = I
          GOTO 100
       ENDIF
@@ -134,7 +134,7 @@ C  -------------------------------------------------------------
       IF (IOKOPER(NEMO).EQ.1) THEN
          READ(NEMO,'(1X,I2)') IRET
          IDN = IFXY(NEMO)
-         IF(LEN(TAB).GE.1) TAB(1:1) = 'C'
+         TAB(1:1) = 'C'
          GOTO 100
       ENDIF
 

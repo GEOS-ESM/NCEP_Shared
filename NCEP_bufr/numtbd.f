@@ -73,7 +73,7 @@ C-----------------------------------------------------------------------
 
       NEMO = ' '
       IRET = 0
-      IF(LEN(TAB).GE.1) TAB(1:1) = ' '
+      TAB(1:1) = ' '
 
       IF(IDN.GE.IFXY('300000')) THEN
 
@@ -83,7 +83,7 @@ C        -----------------------
           DO I=1,NTBD(LUN)
              IF(IDN.EQ.IDND(I,LUN)) THEN
                 NEMO = TABD(I,LUN)(7:14)
-                IF(LEN(TAB).GE.1) TAB(1:1) = 'D'
+                TAB(1:1) = 'D'
                 IRET = I
                 GOTO 100
              ENDIF
@@ -97,7 +97,7 @@ C        -----------------------
           DO I=1,NTBB(LUN)
              IF(IDN.EQ.IDNB(I,LUN)) THEN
                 NEMO = TABB(I,LUN)(7:14)
-                IF(LEN(TAB).GE.1) TAB(1:1) = 'B'
+                TAB(1:1) = 'B'
                 IRET = I
                 GOTO 100
              ENDIF

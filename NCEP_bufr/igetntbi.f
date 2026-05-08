@@ -43,13 +43,13 @@ C$$$
 C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
 
-	IF ( LEN(CTB).GE.1 .AND. CTB(1:1) .EQ. 'A' ) THEN
+	IF ( CTB(1:1) .EQ. 'A' ) THEN
 	  IGETNTBI = NTBA(LUN) + 1
 	  IMAX = NTBA(0)
-	ELSE IF ( LEN(CTB).GE.1 .AND. CTB(1:1) .EQ. 'B' ) THEN
+	ELSE IF ( CTB(1:1) .EQ. 'B' ) THEN
 	  IGETNTBI = NTBB(LUN) + 1
 	  IMAX = NTBB(0)
-	ELSE IF ( LEN(CTB).GE.1 .AND. CTB(1:1) .EQ. 'D' ) THEN
+	ELSE IF ( CTB(1:1) .EQ. 'D' ) THEN
 	  IGETNTBI = NTBD(LUN) + 1
 	  IMAX = NTBD(0)
 	ENDIF
