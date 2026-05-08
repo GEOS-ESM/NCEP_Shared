@@ -79,7 +79,7 @@ C$$$
 
       CHARACTER*(*) NEMO
       CHARACTER*8   NEMT
-      CHARACTER*(*) TAB
+      CHARACTER*1   TAB
       LOGICAL       FOLVAL
 
 C-----------------------------------------------------------------------
@@ -87,7 +87,7 @@ C-----------------------------------------------------------------------
 
       FOLVAL = NEMO(1:1).EQ.'.'
       IRET = 0
-      TAB(1:1) = ' '
+      TAB = ' '
 
 C  LOOK FOR NEMO IN TABLE B
 C  ------------------------
@@ -96,7 +96,7 @@ C  ------------------------
       NEMT = TABB(I,LUN)(7:14)
       IF(NEMT.EQ.NEMO) THEN
          IDN  = IDNB(I,LUN)
-         TAB(1:1) = 'B'
+         TAB = 'B'
          IRET = I
          GOTO 100
       ELSEIF(FOLVAL.AND.NEMT(1:1).EQ.'.') THEN
@@ -104,7 +104,7 @@ C  ------------------------
          IF(NEMT(J:J).NE.'.' .AND. NEMT(J:J).NE.NEMO(J:J)) GOTO 1
          ENDDO
          IDN  = IDNB(I,LUN)
-         TAB(1:1) = 'B'
+         TAB = 'B'
          IRET = I
          GOTO 100
       ENDIF
@@ -122,7 +122,7 @@ C  ----------------------------------
       NEMT = TABD(I,LUN)(7:14)
       IF(NEMT.EQ.NEMO) THEN
          IDN  = IDND(I,LUN)
-         TAB(1:1) = 'D'
+         TAB = 'D'
          IRET = I
          GOTO 100
       ENDIF
@@ -134,7 +134,7 @@ C  -------------------------------------------------------------
       IF (IOKOPER(NEMO).EQ.1) THEN
          READ(NEMO,'(1X,I2)') IRET
          IDN = IFXY(NEMO)
-         TAB(1:1) = 'C'
+         TAB = 'C'
          GOTO 100
       ENDIF
 
