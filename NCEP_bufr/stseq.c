@@ -88,7 +88,7 @@ void stseq( f77int *lun, f77int *irepct, f77int *idn, char nemo[8],
 **  Is *idn already listed as an entry in the internal Table D?
 **  If so, then there's no need to proceed any further.
 */
-    numtbd( lun, idn, nemo2, tab, &iret, sizeof( nemo2 ), 1 );
+    numtbd( lun, idn, nemo2, tab, &iret, sizeof( nemo2 ), (size_t)1 );
     if ( ( iret > 0 ) && ( tab[0] == 'D' ) ) return;
 
 /*
@@ -96,7 +96,7 @@ void stseq( f77int *lun, f77int *irepct, f77int *idn, char nemo[8],
 */
     tab[0] = 'D';
     tab[1] = '\0';
-    nd = igetntbi( lun, tab, 1 );
+    nd = igetntbi( lun, tab, (size_t)1 );
     cadn30( idn, adn, sizeof( adn ) ); 
     stntbi( &nd, lun, adn, nemo, cseq, sizeof( adn ), 8, 55 );
 
@@ -176,14 +176,14 @@ void stseq( f77int *lun, f77int *irepct, f77int *idn, char nemo[8],
 **		  Is nemo2 already listed as an entry within the internal
 **		  Table B?
 */
-		  nemtab( lun, nemo2, &pkint, tab, &iret, 8, 1 );
+		  nemtab( lun, nemo2, &pkint, tab, &iret, 8, (size_t)1 );
 		  if ( ( iret == 0 ) || ( tab[0] != 'B' ) ) {
 /*
 **		    No, so create and store a new Table B entry for nemo2.
 */
 		    tab[0] = 'B';
 		    tab[1] = '\0';
-		    nb = igetntbi( lun, tab, 1 );
+		    nb = igetntbi( lun, tab, (size_t)1 );
 
 		    if ( ix == 4 ) {
 			sprintf( rpseq, "Associated field of %3lu bits",
@@ -394,7 +394,7 @@ void stseq( f77int *lun, f77int *irepct, f77int *idn, char nemo[8],
 **	    Is cdesc[i] already listed as an entry in the internal Table B?
 */
 	    numtbd( lun, &cdesc[i], nemo2, tab, &iret, sizeof( nemo2 ),
-		    1 );
+		    (size_t)1 );
 	    if ( ( iret == 0 ) || ( tab[0] != 'B' ) ) {
 /*
 **		No, so search for it within the master table B.
@@ -403,7 +403,7 @@ void stseq( f77int *lun, f77int *irepct, f77int *idn, char nemo[8],
 /*
 ** 		Start a new Table B entry for cdesc[i].
 */
-		nb = igetntbi( lun, tab, 1 );
+		nb = igetntbi( lun, tab, (size_t)1 );
 		cadn30( &cdesc[i], adn2, sizeof( adn2 ) ); 
 		stntbi( &nb, lun, adn2, &MSTABS_BASE(cbmnem)[ipt][0],
 			&MSTABS_BASE(cbelem)[ipt][0], sizeof( adn2 ), 8, 55 );
