@@ -201,6 +201,9 @@ C  ------------------------
 
       DO I=1,NFILES
       NVAL(I) = 0
+      DO J=1,MAXSS
+      VAL(J,I) = 0.0D0
+      ENDDO
       ENDDO
 
 C  INITIALIZE /REPTAB/
