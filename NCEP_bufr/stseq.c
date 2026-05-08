@@ -63,7 +63,7 @@ void stseq( f77int *lun, f77int *irepct, f77int *idn, char nemo[8],
     f77int i, j, nb, nd, ipt, ix, iy, iret, nbits;
     f77int i0 = 0, imxcd, rpidn, pkint, ilen;
 
-    char tab, adn[7], adn2[7], nemo2[9], units[10], errstr[129];
+    char tab[2], adn[7], adn2[7], nemo2[9], units[10], errstr[129];
     char rpseq[56], card[80], cblk = ' ';
 
 /*
@@ -88,14 +88,15 @@ void stseq( f77int *lun, f77int *irepct, f77int *idn, char nemo[8],
 **  Is *idn already listed as an entry in the internal Table D?
 **  If so, then there's no need to proceed any further.
 */
-    numtbd( lun, idn, nemo2, &tab, &iret, sizeof( nemo2 ), sizeof( tab ) );
-    if ( ( iret > 0 ) && ( tab == 'D' ) ) return;
+    numtbd( lun, idn, nemo2, tab, &iret, sizeof( nemo2 ), sizeof( tab ) );
+    if ( ( iret > 0 ) && ( tab[0] == 'D' ) ) return;
 
 /*
 **  Start a new Table D entry for *idn.
 */
-    tab = 'D';
-    nd = igetntbi( lun, &tab, sizeof ( tab ) );
+    tab[0] = 'D';
+    tab[1] = '\0';
+    nd = igetntbi( lun, tab, sizeof ( tab ) );
     cadn30( idn, adn, sizeof( adn ) ); 
     stntbi( &nd, lun, adn, nemo, cseq, sizeof( adn ), 8, 55 );
 
@@ -112,7 +113,7 @@ void stseq( f77int *lun, f77int *irepct, f77int *idn, char nemo[8],
 **	    master table D and then store the contents within the internal
 **	    Table D via a recursive call to this same routine.
 */
-	    nummtb( &cdesc[i], &tab, &ipt );
+	    nummtb( &cdesc[i], tab, &ipt );
 	    if ( naf > 0 ) {
 /*
 **		There are associated fields in effect which will modify this
@@ -175,13 +176,14 @@ void stseq( f77int *lun, f77int *irepct, f77int *idn, char nemo[8],
 **		  Is nemo2 already listed as an entry within the internal
 **		  Table B?
 */
-		  nemtab( lun, nemo2, &pkint, &tab, &iret, 8, sizeof( tab ) );
-		  if ( ( iret == 0 ) || ( tab != 'B' ) ) {
+		  nemtab( lun, nemo2, &pkint, tab, &iret, 8, sizeof( tab ) );
+		  if ( ( iret == 0 ) || ( tab[0] != 'B' ) ) {
 /*
 **		    No, so create and store a new Table B entry for nemo2.
 */
-		    tab = 'B';
-		    nb = igetntbi( lun, &tab, sizeof( tab ) );
+		    tab[0] = 'B';
+		    tab[1] = '\0';
+		    nb = igetntbi( lun, tab, sizeof( tab ) );
 
 		    if ( ix == 4 ) {
 			sprintf( rpseq, "Associated field of %3lu bits",
@@ -344,7 +346,7 @@ void stseq( f77int *lun, f77int *irepct, f77int *idn, char nemo[8],
 **		so there's no need to invent a new sequence for this replication
 **		(this is a special case!)
 */
-		nummtb( &cdesc[i], &tab, &ipt );
+		nummtb( &cdesc[i], tab, &ipt );
 	    	stseq( lun, irepct, &cdesc[i], &MSTABS_BASE(cdmnem)[ipt][0],
 		       &MSTABS_BASE(cdseq)[ipt][0],
 		       &MSTABS_BASE(idefxy)[icvidx(&ipt,&i0,&imxcd)],
@@ -391,17 +393,17 @@ void stseq( f77int *lun, f77int *irepct, f77int *idn, char nemo[8],
 **
 **	    Is cdesc[i] already listed as an entry in the internal Table B?
 */
-	    numtbd( lun, &cdesc[i], nemo2, &tab, &iret, sizeof( nemo2 ),
+	    numtbd( lun, &cdesc[i], nemo2, tab, &iret, sizeof( nemo2 ),
 		    sizeof( tab ) );
-	    if ( ( iret == 0 ) || ( tab != 'B' ) ) {
+	    if ( ( iret == 0 ) || ( tab[0] != 'B' ) ) {
 /*
 **		No, so search for it within the master table B.
 */
-		nummtb( &cdesc[i], &tab, &ipt );
+		nummtb( &cdesc[i], tab, &ipt );
 /*
 ** 		Start a new Table B entry for cdesc[i].
 */
-		nb = igetntbi( lun, &tab, sizeof( tab ) );
+		nb = igetntbi( lun, tab, sizeof( tab ) );
 		cadn30( &cdesc[i], adn2, sizeof( adn2 ) ); 
 		stntbi( &nb, lun, adn2, &MSTABS_BASE(cbmnem)[ipt][0],
 			&MSTABS_BASE(cbelem)[ipt][0], sizeof( adn2 ), 8, 55 );

@@ -56,12 +56,12 @@ void restd( f77int *lun, f77int *tddesc, f77int *nctddesc, f77int ctddesc[] )
     f77int i, j, inum, itbd, ictbd;
     f77int iscl, iref, ibit;
 
-    char tab, nemo[9], adn[7], cunit[25];
+    char tab[2], nemo[9], adn[7], cunit[25];
 
 /*
 **  How many child descriptors does *tddesc have?
 */
-    numtbd( lun, tddesc, nemo, &tab, &itbd, 9, 1 );
+    numtbd( lun, tddesc, nemo, tab, &itbd, 9, sizeof(tab) );
     uptdd( &itbd, lun, &i0, &inum );
 
     *nctddesc = 0;
@@ -74,8 +74,8 @@ void restd( f77int *lun, f77int *tddesc, f77int *nctddesc, f77int ctddesc[] )
 /*
 **	    desc is a local descriptor.
 */ 
-	    numtbd( lun, &desc, nemo, &tab, &ictbd, 9, 1 );
-	    if ( tab == 'D' ) {
+	    numtbd( lun, &desc, nemo, tab, &ictbd, 9, sizeof(tab) );
+	    if ( tab[0] == 'D' ) {
 /*
 **		desc is itself a local Table D descriptor, so resolve
 **		it now via a recursive call to this same routine.
@@ -115,7 +115,7 @@ void restd( f77int *lun, f77int *tddesc, f77int *nctddesc, f77int ctddesc[] )
 		}
 		    
 	    }
-	    else if ( tab == 'B' ) {
+	    else if ( tab[0] == 'B' ) {
 /*
 **		desc is a local Table B descriptor, so precede it with
 **		a 206YYY operator in the output list.
