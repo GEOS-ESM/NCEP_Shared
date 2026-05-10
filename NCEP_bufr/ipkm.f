@@ -49,7 +49,8 @@ C$$$
       COMMON /HRDWRD/ NBYTW,NBITW,IORD(8)
 
       CHARACTER*128 BORT_STR
-      CHARACTER*8   CBAY,CINT
+      CHARACTER*(*) CBAY
+      CHARACTER*8   CINT
       EQUIVALENCE   (CINT,INT)
 
 C----------------------------------------------------------------------

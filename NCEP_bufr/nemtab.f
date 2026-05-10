@@ -96,7 +96,7 @@ C  ------------------------
       NEMT = TABB(I,LUN)(7:14)
       IF(NEMT.EQ.NEMO) THEN
          IDN  = IDNB(I,LUN)
-         TAB  = 'B'
+         TAB = 'B'
          IRET = I
          GOTO 100
       ELSEIF(FOLVAL.AND.NEMT(1:1).EQ.'.') THEN
@@ -104,7 +104,7 @@ C  ------------------------
          IF(NEMT(J:J).NE.'.' .AND. NEMT(J:J).NE.NEMO(J:J)) GOTO 1
          ENDDO
          IDN  = IDNB(I,LUN)
-         TAB  = 'B'
+         TAB = 'B'
          IRET = I
          GOTO 100
       ENDIF
@@ -122,7 +122,7 @@ C  ----------------------------------
       NEMT = TABD(I,LUN)(7:14)
       IF(NEMT.EQ.NEMO) THEN
          IDN  = IDND(I,LUN)
-         TAB  = 'D'
+         TAB = 'D'
          IRET = I
          GOTO 100
       ENDIF

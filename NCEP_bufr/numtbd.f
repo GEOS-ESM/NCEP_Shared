@@ -80,28 +80,28 @@ C-----------------------------------------------------------------------
 C        LOOK FOR IDN IN TABLE D
 C        -----------------------
 
-         DO I=1,NTBD(LUN)
-            IF(IDN.EQ.IDND(I,LUN)) THEN
-               NEMO = TABD(I,LUN)(7:14)
-               TAB  = 'D'
-               IRET = I
-               GOTO 100
-            ENDIF
-         ENDDO
+          DO I=1,NTBD(LUN)
+             IF(IDN.EQ.IDND(I,LUN)) THEN
+                NEMO = TABD(I,LUN)(7:14)
+                TAB = 'D'
+                IRET = I
+                GOTO 100
+             ENDIF
+          ENDDO
 
       ELSE
 
 C        LOOK FOR IDN IN TABLE B
 C        -----------------------
 
-         DO I=1,NTBB(LUN)
-            IF(IDN.EQ.IDNB(I,LUN)) THEN
-               NEMO = TABB(I,LUN)(7:14)
-               TAB  = 'B'
-               IRET = I
-               GOTO 100
-            ENDIF
-         ENDDO
+          DO I=1,NTBB(LUN)
+             IF(IDN.EQ.IDNB(I,LUN)) THEN
+                NEMO = TABB(I,LUN)(7:14)
+                TAB = 'B'
+                IRET = I
+                GOTO 100
+             ENDIF
+          ENDDO
 
       ENDIF
 
